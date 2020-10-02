@@ -64,3 +64,9 @@ let populate_postgres ~conninfo ~commit ~json_string ~pr_info =
   with
   | Error e -> prerr_endline (string_of_error e)
   | e -> prerr_endline (Printexc.to_string e)
+
+let parse ~bench_output =
+  let bench_output = String.trim bench_output in
+  let index1 = String.index bench_output '\n' in
+  let index2 = String.rindex bench_output '\n' in
+  String.trim (String.sub bench_output index1 (index2 - index1 + 1))

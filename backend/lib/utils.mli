@@ -9,3 +9,5 @@ val populate_postgres :
   json_string:string ->
   pr_info:string ->
   unit
+
+val parse : bench_output:string -> string

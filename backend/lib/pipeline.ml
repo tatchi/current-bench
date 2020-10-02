@@ -45,7 +45,7 @@ let dockerfile ~base =
   @@ workdir "index"
   @@ run "opam install -y --deps-only -t ."
   @@ add ~src:[ "--chown=opam ." ] ~dst:"." ()
-  @@ run "opam config exec -- dune build @@default bench/bench.exe"
+  @@ run "opam config exec -- dune build @runbench"
   @@ run "eval $(opam env)"
 
 let weekly = Current_cache.Schedule.v ~valid_for:(Duration.of_day 1) ()
@@ -90,16 +90,16 @@ let pipeline ~slack_path ~conninfo ~(info : pr_info) ~dockerfile ~tmpfs
             "/usr/bin/setarch";
             "x86_64";
             "--addr-no-randomize";
-            "_build/default/bench/bench.exe";
-            "-d";
-            "/dev/shm";
-            "--json";
+            "dune";
+            "build";
+            "@runbench";
           ]
     and+ commit =
       match head with
       | `Github api_commit -> Current.return (Github.Api.Commit.hash api_commit)
       | `Local commit -> commit >>| Git.Commit.hash
     in
+    let output = Utils.parse ~bench_output:output in
     let content =
       Utils.merge_json ~repo:name ~owner ~commit
         (Yojson.Basic.from_string output)
