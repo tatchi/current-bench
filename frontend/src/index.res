@@ -6,7 +6,7 @@ let fetchOptions = ReasonUrql.Client.FetchOpts(
 )
 
 let client = ReasonUrql.Client.make(
-  ~url="http://autumn.ocamllabs.io:8080/v1/graphql",
+  ~url="http://localhost:8080/v1/graphql",
   ~fetchOptions,
   (),
 )

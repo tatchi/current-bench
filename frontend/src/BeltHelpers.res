@@ -37,4 +37,13 @@ module Array = {
       }
     loop(len - 1, None)
   }
+
+  let deoptionalize = arr => {
+    arr->Belt.Array.reduce([], (acc, value) => {
+      switch value {
+      | None => acc
+      | Some(v) => Belt.Array.concat(acc, [v])
+      }
+    })
+  }
 }
