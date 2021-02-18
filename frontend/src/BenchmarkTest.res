@@ -7,10 +7,10 @@ type testMetrics = {
   metrics: Belt.Map.String.t<float>,
 }
 
-let commitUrl = commit => `https://github.com/mirage/index/commit/${commit}`
-let goToCommitLink = commit => {
+let commitUrl = (repo_id, commit) => `https://github.com/${repo_id}/commit/${commit}`
+let goToCommitLink = (repo_id, commit) => {
   let openUrl: string => unit = %raw(`function (url) { window.open(url, "_blank") }`)
-  openUrl(commitUrl(commit))
+  openUrl(commitUrl(repo_id, commit))
 }
 
 let groupByTestName = (acc, item: testMetrics, idx) => {
@@ -85,6 +85,7 @@ let calcDeltaStr = (a, b) => {
 
 let renderMetricOverviewRow = (
   ~comparison as (comparisonTimeseries, _comparisonMetadata)=([], []),
+  ~repo_id,
   metricName,
   (timeseries, metadata),
 ) => {
@@ -106,7 +107,9 @@ let renderMetricOverviewRow = (
 
     <Table.Row key=metricName>
       <Table.Col> {Rx.text(metricName)} </Table.Col>
-      <Table.Col> <Link target="_blank" href={commitUrl(commit)} text=commit /> </Table.Col>
+      <Table.Col>
+        <Link target="_blank" href={commitUrl(repo_id, commit)} text=commit />
+      </Table.Col>
       <Table.Col> {Rx.text(last_value->Js.Float.toFixedWithPrecision(~digits=2))} </Table.Col>
       <Table.Col sx=[Sx.text.right]> {Rx.text(vsMasterAbs)} </Table.Col>
       <Table.Col sx=[Sx.text.right]> {Rx.text(vsMasterRel)} </Table.Col>
@@ -116,6 +119,7 @@ let renderMetricOverviewRow = (
 
 @react.component
 let make = (
+  ~repo_id,
   ~testName,
   ~synchronize=false,
   ~comparison=Belt.Map.String.empty,
@@ -152,6 +156,7 @@ let make = (
           )
           renderMetricOverviewRow(
             ~comparison=(comparisonTimeseries, comparisonMetadata),
+            ~repo_id,
             metricName,
           )
         })
@@ -201,7 +206,7 @@ let make = (
     }
 
     <LineGraph
-      onXLabelClick=goToCommitLink
+      onXLabelClick={commit => goToCommitLink(repo_id, commit)}
       onRender=onGraphRender
       key=metricName
       title=metricName
