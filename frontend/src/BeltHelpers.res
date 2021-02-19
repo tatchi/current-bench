@@ -45,4 +45,13 @@ module Array = {
 
   let last = arr => Belt.Array.get(arr, Belt.Array.length(arr) - 1)
   let lastExn = arr => Belt.Array.getExn(arr, Belt.Array.length(arr) - 1)
+
+  let deoptionalize = arr => {
+    arr->Belt.Array.reduce([], (acc, value) =>
+      switch value {
+      | None => acc
+      | Some(v) => Belt.Array.concat(acc, [v])
+      }
+    )
+  }
 }

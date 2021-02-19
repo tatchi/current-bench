@@ -18,6 +18,14 @@ query ($startDate: timestamp!, $endDate: timestamp!) {
   }
 `)
 
+module GetRepoIds = %graphql(`
+query GetRepoIds {
+  benchmarks(distinct_on: [repo_id]) {
+      repo_id
+    }
+  }
+`)
+
 module PullCompare = Belt.Id.MakeComparable({
   type t = (int, option<string>)
   let cmp = (a, b) => -compare(a, b)
@@ -123,11 +131,11 @@ let getDefaultDateRange = {
 module Content = {
   @react.component
   let make = (
-    ~pulls,
+    // ~pulls,
     ~selectedRepoId,
     ~repo_ids,
-    ~benchmarkDataByTestName,
-    ~comparisonBenchmarkDataByTestName=?,
+    // ~benchmarkDataByTestName,
+    // ~comparisonBenchmarkDataByTestName=?,
     ~startDate,
     ~endDate,
     ~onSelectDateRange,
@@ -137,7 +145,6 @@ module Content = {
   ) => {
     <div className={Sx.make([Sx.container, Sx.d.flex, Sx.flex.wrap])}>
       <Sidebar
-        pulls
         selectedRepoId
         ?selectedPull
         repo_ids
@@ -158,12 +165,7 @@ module Content = {
           <Litepicker startDate endDate sx=[Sx.w.xl5] onSelect={onSelectDateRange} />
         </Row>
       </div>
-      <div className={Sx.make(Styles.mainSx)}>
-        React.null
-        <BenchmarkView
-          repo_id=selectedRepoId benchmarkDataByTestName ?comparisonBenchmarkDataByTestName
-        />
-      </div>
+      <div className={Sx.make(Styles.mainSx)} />
     </div>
   }
 }
@@ -180,13 +182,7 @@ let make = () => {
   let ({ReasonUrql.Hooks.response: response}, _) = {
     let startDate = Js.Date.toISOString(startDate)->Js.Json.string
     let endDate = Js.Date.toISOString(endDate)->Js.Json.string
-    ReasonUrql.Hooks.useQuery(
-      ~query=module(GetBenchmarks),
-      {
-        startDate: startDate,
-        endDate: endDate,
-      },
-    )
+    ReasonUrql.Hooks.useQuery(~query=module(GetRepoIds), ())
   }
 
   let (synchronize, setSynchronize) = React.useState(() => false)
@@ -204,24 +200,23 @@ let make = () => {
   | Fetching => Rx.string("Loading...")
   | Data(data)
   | PartialData(data, _) =>
-    let benchmarks: array<GetBenchmarks.t_benchmarks> = data.benchmarks
-    let repo_ids = collectRepoIds(data.benchmarks)
+    let repo_ids = data.benchmarks->Belt.Array.map(benchmark => benchmark.repo_id)
 
-    let benchmarkData = benchmarks->Belt.Array.reduce(BenchmarkData.empty, (acc, item) => {
-      item.metrics
-      ->decodeMetrics
-      ->Belt.Map.String.reduce(acc, (acc, metricName, value) => {
-        BenchmarkData.add(
-          acc,
-          ~pullNumber=item.pull_number,
-          ~testName=item.test_name,
-          ~metricName,
-          ~runAt=item.run_at->decodeRunAt->Belt.Option.getExn,
-          ~commit=item.commit,
-          ~value,
-        )
-      })
-    })
+    // let benchmarkData = benchmarks->Belt.Array.reduce(BenchmarkData.empty, (acc, item) => {
+    //   item.metrics
+    //   ->decodeMetrics
+    //   ->Belt.Map.String.reduce(acc, (acc, metricName, value) => {
+    //     BenchmarkData.add(
+    //       acc,
+    //       ~pullNumber=item.pull_number,
+    //       ~testName=item.test_name,
+    //       ~metricName,
+    //       ~runAt=item.run_at->decodeRunAt->Belt.Option.getExn,
+    //       ~commit=item.commit,
+    //       ~value,
+    //     )
+    //   })
+    // })
 
     switch String.split_on_char('/', url.hash) {
     | list{""} =>
@@ -239,53 +234,73 @@ let make = () => {
         switch selectedRepoId {
         | None => <div> {"This repo does not exist!"->Rx.string} </div>
         | Some(selectedRepoId) =>
-          let pulls = collectPullsForRepo(~repo_id=selectedRepoId, benchmarks)
+          // let pulls = collectPullsForRepo(~repo_id=selectedRepoId, benchmarks)
           switch rest {
           | list{"pull", pullNumberStr} =>
             switch Belt.Int.fromString(pullNumberStr) {
             | None =>
               <div> {("Pull request must be an integer. Got: " ++ pullNumberStr)->Rx.string} </div>
             | Some(selectedPull) =>
-              if pulls->Belt.Array.some(((pullNr, _)) => pullNr == selectedPull) {
-                let benchmarkDataByTestName = BenchmarkData.forPullNumber(
-                  benchmarkData,
-                  Some(selectedPull),
-                )
-                let comparisonBenchmarkDataByTestName = BenchmarkData.forPullNumber(
-                  benchmarkData,
-                  None,
-                )
-                <Content
-                  pulls
-                  selectedRepoId
-                  repo_ids
-                  benchmarkDataByTestName
-                  comparisonBenchmarkDataByTestName
-                  selectedPull
-                  startDate
-                  endDate
-                  onSelectDateRange
-                  synchronize
-                  onSynchronizeToggle
-                />
-              } else {
-                <div> {"This pull request does not exist!"->Rx.string} </div>
-              }
+              <Content
+                selectedRepoId
+                repo_ids
+                selectedPull
+                startDate
+                endDate
+                onSelectDateRange
+                synchronize
+                onSynchronizeToggle
+              />
+
+            // if pulls->Belt.Array.some(((pullNr, _)) => pullNr == selectedPull) {
+            //   let benchmarkDataByTestName = BenchmarkData.forPullNumber(
+            //     benchmarkData,
+            //     Some(selectedPull),
+            //   )
+            //   let comparisonBenchmarkDataByTestName = BenchmarkData.forPullNumber(
+            //     benchmarkData,
+            //     None,
+            //   )
+            //   <Content
+            //     pulls
+            //     selectedRepoId
+            //     repo_ids
+            //     benchmarkDataByTestName
+            //     comparisonBenchmarkDataByTestName
+            //     selectedPull
+            //     startDate
+            //     endDate
+            //     onSelectDateRange
+            //     synchronize
+            //     onSynchronizeToggle
+            //   />
+            // } else {
+            //   <div> {"This pull request does not exist!"->Rx.string} </div>
+            // }
             }
           | list{} =>
-            let benchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
-
             <Content
-              pulls
               selectedRepoId
               repo_ids
-              benchmarkDataByTestName
               startDate
               endDate
               onSelectDateRange
               synchronize
               onSynchronizeToggle
             />
+          // let benchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
+
+          // <Content
+          //   pulls
+          //   selectedRepoId
+          //   repo_ids
+          //   benchmarkDataByTestName
+          //   startDate
+          //   endDate
+          //   onSelectDateRange
+          //   synchronize
+          //   onSynchronizeToggle
+          // />
           | _ => <div> {("Unknown route: " ++ url.hash)->Rx.string} </div>
           }
         }
