@@ -44,32 +44,6 @@ module PullCompare = Belt.Id.MakeComparable({
   let cmp = (a, b) => -compare(a, b)
 })
 
-// let collectBenchmarksForRepo = (~repo_id, data: array<GetBenchmarks.t_benchmarks>): array<
-//   GetBenchmarks.t_benchmarks,
-// > => {
-//   data->Belt.Array.keep(item => item.repo_id == repo_id)
-// }
-
-// let collectPullsForRepo = (~repo_id, benchmarks: array<GetBenchmarks.t_benchmarks>): array<(
-//   int,
-//   option<string>,
-// )> => {
-//   benchmarks
-//   ->collectBenchmarksForRepo(~repo_id)
-//   ->Belt.Array.keepMap((item: GetBenchmarks.t_benchmarks) =>
-//     Belt.Option.flatMap(item.pull_number, pull_number => Some(pull_number, item.branch))
-//   )
-//   ->Belt.Set.fromArray(~id=module(PullCompare))
-//   ->Belt.Set.toArray
-// }
-
-// let collectRepoIds = (benchmarks: array<GetBenchmarks.t_benchmarks>): array<string> => {
-//   benchmarks
-//   ->Belt.Array.map(item => item.repo_id)
-//   ->Belt.Set.String.fromArray
-//   ->Belt.Set.String.toArray
-// }
-
 let decodeRunAt = runAt => runAt->Js.Json.decodeString->Belt.Option.map(Js.Date.fromString)
 
 let decodeMetrics = metrics =>
@@ -79,13 +53,6 @@ let decodeMetrics = metrics =>
   ->Belt.Option.getExn
   ->jsDictToMap
   ->Belt.Map.String.map(v => BenchmarkTest.decodeMetricValue(v))
-
-// let collectBenchmarksForPull = (~repo_id, ~pull, benchmarks) =>
-//   benchmarks
-//   ->collectBenchmarksForRepo(~repo_id)
-//   ->Belt.Array.keep((item: GetBenchmarks.t_benchmarks) => {
-//     item.pull_number == Some(pull)
-//   })
 
 let getTestMetrics = (item: Benchmark.t): BenchmarkTest.testMetrics => {
   {
@@ -199,11 +166,8 @@ module BencharkViewForPull = {
 module Content = {
   @react.component
   let make = (
-    // ~pulls,
     ~selectedRepoId,
     ~repo_ids,
-    // ~benchmarkDataByTestName,
-    // ~comparisonBenchmarkDataByTestName=?,
     ~startDate,
     ~endDate,
     ~onSelectDateRange,
@@ -275,22 +239,6 @@ let make = () => {
   | PartialData(data, _) =>
     let repo_ids = data.benchmarks->Belt.Array.map(benchmark => benchmark.repo_id)
 
-    // let benchmarkData = benchmarks->Belt.Array.reduce(BenchmarkData.empty, (acc, item) => {
-    //   item.metrics
-    //   ->decodeMetrics
-    //   ->Belt.Map.String.reduce(acc, (acc, metricName, value) => {
-    //     BenchmarkData.add(
-    //       acc,
-    //       ~pullNumber=item.pull_number,
-    //       ~testName=item.test_name,
-    //       ~metricName,
-    //       ~runAt=item.run_at->decodeRunAt->Belt.Option.getExn,
-    //       ~commit=item.commit,
-    //       ~value,
-    //     )
-    //   })
-    // })
-
     switch String.split_on_char('/', url.hash) {
     | list{""} =>
       switch Belt.Array.get(repo_ids, 0) {
@@ -307,7 +255,6 @@ let make = () => {
         switch selectedRepoId {
         | None => <div> {"This repo does not exist!"->Rx.string} </div>
         | Some(selectedRepoId) =>
-          // let pulls = collectPullsForRepo(~repo_id=selectedRepoId, benchmarks)
           switch rest {
           | list{"pull", pullNumberStr} =>
             switch Belt.Int.fromString(pullNumberStr) {
@@ -324,32 +271,6 @@ let make = () => {
                 synchronize
                 onSynchronizeToggle
               />
-
-            // if pulls->Belt.Array.some(((pullNr, _)) => pullNr == selectedPull) {
-            //   let benchmarkDataByTestName = BenchmarkData.forPullNumber(
-            //     benchmarkData,
-            //     Some(selectedPull),
-            //   )
-            //   let comparisonBenchmarkDataByTestName = BenchmarkData.forPullNumber(
-            //     benchmarkData,
-            //     None,
-            //   )
-            //   <Content
-            //     pulls
-            //     selectedRepoId
-            //     repo_ids
-            //     benchmarkDataByTestName
-            //     comparisonBenchmarkDataByTestName
-            //     selectedPull
-            //     startDate
-            //     endDate
-            //     onSelectDateRange
-            //     synchronize
-            //     onSynchronizeToggle
-            //   />
-            // } else {
-            //   <div> {"This pull request does not exist!"->Rx.string} </div>
-            // }
             }
           | list{} =>
             <Content
@@ -361,19 +282,6 @@ let make = () => {
               synchronize
               onSynchronizeToggle
             />
-          // let benchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
-
-          // <Content
-          //   pulls
-          //   selectedRepoId
-          //   repo_ids
-          //   benchmarkDataByTestName
-          //   startDate
-          //   endDate
-          //   onSelectDateRange
-          //   synchronize
-          //   onSynchronizeToggle
-          // />
           | _ => <div> {("Unknown route: " ++ url.hash)->Rx.string} </div>
           }
         }
