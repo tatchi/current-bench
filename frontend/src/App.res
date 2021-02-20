@@ -54,25 +54,6 @@ let decodeMetrics = metrics =>
   ->jsDictToMap
   ->Belt.Map.String.map(v => BenchmarkTest.decodeMetricValue(v))
 
-let getTestMetrics = (item: Benchmark.t): BenchmarkTest.testMetrics => {
-  {
-    BenchmarkTest.name: item.test_name,
-    metrics: item.metrics
-    ->Belt.Option.getExn
-    ->Js.Json.decodeObject
-    ->Belt.Option.getExn
-    ->jsDictToMap
-    ->Belt.Map.String.map(v => BenchmarkTest.decodeMetricValue(v)),
-    commit: item.commit,
-  }
-}
-
-let getLatestMasterIndex = (~testName, benchmarks) => {
-  BeltHelpers.Array.findIndexRev(benchmarks, (item: Benchmark.t) => {
-    item.pull_number == None && item.test_name == testName
-  })
-}
-
 module BenchmarkView = {
   @react.component
   let make = (
