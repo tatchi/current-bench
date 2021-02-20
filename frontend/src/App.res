@@ -93,9 +93,7 @@ module BenchmarkView = {
       ->Belt.Map.String.valuesToArray
     }
 
-    <Column spacing=Sx.xl3>
-      {graphs->Rx.array(~empty=<Message text="No data for selected interval." />)}
-    </Column>
+    <Column spacing=Sx.xl3> {graphs->Rx.array} </Column>
   }
 }
 
@@ -129,36 +127,47 @@ let getBenchmarData = (~benchmarks: array<Benchmark.t>) =>
 module BencharkViewForMaster = {
   @react.component
   let make = (~repo_id) => {
-    let ({ReasonUrql.Hooks.data: data, ReasonUrql.Hooks.fetching: fetching}, _) = {
+    let ({ReasonUrql.Hooks.data: data}, _) = {
       ReasonUrql.Hooks.useQuery(~query=module(GetBenchmarksForMaster), {repo_id: repo_id})
     }
-    switch (fetching, data) {
-    | (false, Some({benchmarks})) => {
-        let benchmarkData = getBenchmarData(~benchmarks)
-        let benchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
-        <BenchmarkView repo_id benchmarkDataByTestName />
+    switch data {
+    | Some({benchmarks}) =>
+      switch benchmarks {
+      | [] => <Message text="No data were found for the selected criterias." />
+      | benchmarks => {
+          let benchmarkData = getBenchmarData(~benchmarks)
+          let benchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
+          <BenchmarkView repo_id benchmarkDataByTestName />
+        }
       }
-    | _ => React.null
+    | None => React.null
     }
   }
 }
 module BencharkViewForPull = {
   @react.component
   let make = (~repo_id, ~pull_number) => {
-    let ({ReasonUrql.Hooks.data: data, ReasonUrql.Hooks.fetching: fetching}, _) = {
+    let ({ReasonUrql.Hooks.data: data}, _) = {
       ReasonUrql.Hooks.useQuery(
         ~query=module(GetBenchmarksForPull),
         {repo_id: repo_id, pull_number: pull_number},
       )
     }
-    switch (fetching, data) {
-    | (false, Some({benchmarks})) => {
-        let benchmarkData = getBenchmarData(~benchmarks)
-        let benchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, Some(pull_number))
-        let comparisonBenchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
-        <BenchmarkView repo_id benchmarkDataByTestName comparisonBenchmarkDataByTestName />
+    switch data {
+    | Some({benchmarks}) =>
+      switch benchmarks {
+      | [] => <Message text="No data were found for the selected criterias." />
+      | benchmarks => {
+          let benchmarkData = getBenchmarData(~benchmarks)
+          let benchmarkDataByTestName = BenchmarkData.forPullNumber(
+            benchmarkData,
+            Some(pull_number),
+          )
+          let comparisonBenchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
+          <BenchmarkView repo_id benchmarkDataByTestName comparisonBenchmarkDataByTestName />
+        }
       }
-    | _ => React.null
+    | None => React.null
     }
   }
 }
