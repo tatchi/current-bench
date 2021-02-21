@@ -25,7 +25,10 @@ module GetBenchmarksForMaster = %graphql(`
 `)
 module GetBenchmarksForPull = %graphql(`
   query ($repo_id: String!, $pull_number: Int!) {
-    benchmarks(where: {_and: [{repo_id: {_eq: $repo_id}}, {_or: [{pull_number: {_eq: $pull_number}}, {pull_number: {_is_null: true}}]}]}) {
+    masterBenchmarks: benchmarks(where: {_and: [{repo_id: {_eq: $repo_id}}, {pull_number: {_is_null: true}}]}) {
+      ...Benchmark
+    }
+    pullBenchmarks: benchmarks(where: {_and: [{repo_id: {_eq: $repo_id}}, {pull_number: {_eq: $pull_number}}]}) {
       ...Benchmark
     }
   }
@@ -95,7 +98,6 @@ let getBenchmarData = (~benchmarks: array<Benchmark.t>) =>
     ->Belt.Map.String.reduce(acc, (acc, metricName, value) => {
       BenchmarkData.add(
         acc,
-        ~pullNumber=item.pull_number,
         ~testName=item.test_name,
         ~metricName,
         ~runAt=item.run_at->decodeRunAt->Belt.Option.getExn,
@@ -116,8 +118,7 @@ module BencharkViewForMaster = {
       switch benchmarks {
       | [] => <Message text="No data were found for the selected criterias." />
       | benchmarks => {
-          let benchmarkData = getBenchmarData(~benchmarks)
-          let benchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
+          let benchmarkDataByTestName = getBenchmarData(~benchmarks)
           <BenchmarkView repo_id benchmarkDataByTestName />
         }
       }
@@ -135,16 +136,12 @@ module BencharkViewForPull = {
       )
     }
     switch data {
-    | Some({benchmarks}) =>
-      switch benchmarks {
+    | Some({masterBenchmarks, pullBenchmarks}) =>
+      switch pullBenchmarks {
       | [] => <Message text="No data were found for the selected criterias." />
-      | benchmarks => {
-          let benchmarkData = getBenchmarData(~benchmarks)
-          let benchmarkDataByTestName = BenchmarkData.forPullNumber(
-            benchmarkData,
-            Some(pull_number),
-          )
-          let comparisonBenchmarkDataByTestName = BenchmarkData.forPullNumber(benchmarkData, None)
+      | pullBenchmarks => {
+          let benchmarkDataByTestName = getBenchmarData(~benchmarks=pullBenchmarks)
+          let comparisonBenchmarkDataByTestName = getBenchmarData(~benchmarks=masterBenchmarks)
           <BenchmarkView repo_id benchmarkDataByTestName comparisonBenchmarkDataByTestName />
         }
       }
