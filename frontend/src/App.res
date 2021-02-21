@@ -126,7 +126,7 @@ module BencharkViewForMaster = {
 module BencharkViewForPull = {
   @react.component
   let make = (~repo_id, ~pull_number) => {
-    let ({ReasonUrql.Hooks.data: data}, _) = {
+    let ({ReasonUrql.Hooks.data: data, ReasonUrql.Hooks.fetching: fetching}, _) = {
       ReasonUrql.Hooks.useQuery(
         ~query=module(GetBenchmarksForPull),
         {repo_id: repo_id, pull_number: pull_number},
@@ -136,7 +136,9 @@ module BencharkViewForPull = {
     | Some({masterBenchmarks, pullBenchmarks}) =>
       let benchmarkDataByTestName = getBenchmarData(~benchmarks=pullBenchmarks)
       let comparisonBenchmarkDataByTestName = getBenchmarData(~benchmarks=masterBenchmarks)
-      <BenchmarkView repo_id benchmarkDataByTestName comparisonBenchmarkDataByTestName />
+      <div className={Sx.make([fetching ? Sx.opacity50 : Sx.opacity100])}>
+        <BenchmarkView repo_id benchmarkDataByTestName comparisonBenchmarkDataByTestName />
+      </div>
     | None => React.null
     }
   }
