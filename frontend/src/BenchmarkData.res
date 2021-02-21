@@ -1,14 +1,8 @@
 open Belt
 
-module PullNumberId = Id.MakeComparable({
-  type t = option<int>
-  let cmp = (a, b) => Pervasives.compare(a, b)
-})
-
 type timeseries = array<array<float>>
 type byMetricName = Map.String.t<(timeseries, array<{"commit": string, "runAt": Js.Date.t}>)>
 type byTestName = Map.String.t<byMetricName>
-type byPullNumber = Map.t<PullNumberId.t, byTestName, PullNumberId.identity>
 type t = byTestName
 
 let empty: t = Belt.Map.String.empty
