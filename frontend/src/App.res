@@ -77,7 +77,9 @@ module BenchmarkView = {
       ->Belt.Map.String.valuesToArray
     }
 
-    <Column spacing=Sx.xl3> {graphs->Rx.array} </Column>
+    <Column spacing=Sx.xl3>
+      {graphs->Rx.array(~empty=<Message text="No data were found for the selected criterias." />)}
+    </Column>
   }
 }
 
@@ -115,13 +117,8 @@ module BencharkViewForMaster = {
     }
     switch data {
     | Some({benchmarks}) =>
-      switch benchmarks {
-      | [] => <Message text="No data were found for the selected criterias." />
-      | benchmarks => {
-          let benchmarkDataByTestName = getBenchmarData(~benchmarks)
-          <BenchmarkView repo_id benchmarkDataByTestName />
-        }
-      }
+      let benchmarkDataByTestName = getBenchmarData(~benchmarks)
+      <BenchmarkView repo_id benchmarkDataByTestName />
     | None => React.null
     }
   }
@@ -137,14 +134,9 @@ module BencharkViewForPull = {
     }
     switch data {
     | Some({masterBenchmarks, pullBenchmarks}) =>
-      switch pullBenchmarks {
-      | [] => <Message text="No data were found for the selected criterias." />
-      | pullBenchmarks => {
-          let benchmarkDataByTestName = getBenchmarData(~benchmarks=pullBenchmarks)
-          let comparisonBenchmarkDataByTestName = getBenchmarData(~benchmarks=masterBenchmarks)
-          <BenchmarkView repo_id benchmarkDataByTestName comparisonBenchmarkDataByTestName />
-        }
-      }
+      let benchmarkDataByTestName = getBenchmarData(~benchmarks=pullBenchmarks)
+      let comparisonBenchmarkDataByTestName = getBenchmarData(~benchmarks=masterBenchmarks)
+      <BenchmarkView repo_id benchmarkDataByTestName comparisonBenchmarkDataByTestName />
     | None => React.null
     }
   }
