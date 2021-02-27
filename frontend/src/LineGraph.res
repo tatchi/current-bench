@@ -10,6 +10,9 @@ external ready: (graph, unit => unit) => unit = "ready"
 external setAnnotations: (graph, array<{.."series": string, "x": 'floatOrDate}>) => unit =
   "setAnnotations"
 
+@send
+external destroy: graph => unit = "destroy"
+
 type global
 @module("dygraphs")
 external global: global = "default"
@@ -155,29 +158,52 @@ let containerSx = [Sx.mt.xl2, Sx.relative, Sx.unsafe("width", "480px"), Sx.h.xl5
 @react.component
 let make = React.memo((~sx as uSx=[],
 ~title=?,
-// ~xTicks=?,
-// ~yLabel=?,
-// ~labels=?,
+~xTicks: option<Belt.Map.Int.t<string>>=?,
+~yLabel: option<string>=?,
+~labels: option<array<string>>=?,
+~testName: string,
 // ~xLabelFormatter=?,
 // ~onRender: option<graph => unit>=?,
 // ~onXLabelClick=?,
-// ~annotations=[],
+~annotations: array<{
+  // "clickHandler": ('a, 'b, 'c, 'd) => unit,
+  "height": int,
+  "icon": string,
+  "series": string,
+  "text": string,
+  "width": int,
+  "x": int,
+}>,
 ~data) => {
-  let graphRef = React.useRef(Js.Nullable.null)
+  let graphDivRef = React.useRef(Js.Nullable.null)
+  Js.log2(testName, title->Belt.Option.getWithDefault("No title"))
   React.useLayoutEffect1(() => {
-    // let options = defaultOptions(
-    //   ~yLabel?,
-    //   ~labels?,
-    //   ~xTicks?,
-    //   ~xLabelFormatter?,
-    //   ~legendFormatter=Legend.format(~xTicks?),
-    //   (),
-    // )
+    let graphRef = ref(None)
+    let options = defaultOptions(
+      ~yLabel?,
+      ~labels?,
+      ~xTicks?,
+      // ~xLabelFormatter?,
+      ~legendFormatter=Legend.format(~xTicks?),
+      (),
+    )
 
-    switch Js.Nullable.toOption(graphRef.current) {
+    switch Js.Nullable.toOption(graphDivRef.current) {
     | None => ()
     | Some(ref) => {
-        let graph = init(ref, data, Js.Dict.empty())
+        graphRef := Some(init(ref, data, options))
+        switch graphRef.contents {
+        | Some(graph) =>
+          if Array.length(annotations) > 0 {
+            graph->ready(() => {
+              if Belt.Option.isNone(graphRef.contents) {
+                Js.log("[IIIIINNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN]")
+              }
+              graph->setAnnotations(annotations)
+            })
+          }
+        | None => ()
+        }
       }
     }
 
@@ -200,7 +226,17 @@ let make = React.memo((~sx as uSx=[],
     // | None => ()
     // }
 
-    None
+    Some(
+      _ => {
+        switch graphRef.contents {
+        | Some(graph) => {
+            graph->destroy
+            graphRef := None
+          }
+        | None => ()
+        }
+      },
+    )
   }, [data])
 
   let title = switch title {
@@ -211,7 +247,7 @@ let make = React.memo((~sx as uSx=[],
   let sx = Array.append(uSx, containerSx)
 
   <div className={Sx.make(sx)}>
-    title <div className={Sx.make(graphSx)} ref={ReactDOMRe.Ref.domRef(graphRef)} />
+    title <div className={Sx.make(graphSx)} ref={ReactDOMRe.Ref.domRef(graphDivRef)} />
   </div>
 })
 

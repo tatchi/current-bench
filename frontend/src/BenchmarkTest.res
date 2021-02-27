@@ -163,7 +163,7 @@ let make = (
     </Table>
   }
 
-  let metric_graphs = React.useMemo1(() =>
+  let metric_graphs = React.useMemo1(() => {
     dataByMetricName
     ->Belt.Map.String.mapWithKey((metricName, (timeseries, metadata)) => {
       let (comparisonTimeseries, comparisonMetadata) = Belt.Map.String.getWithDefault(
@@ -173,72 +173,45 @@ let make = (
       )
 
       let timeseries = Belt.Array.concat(comparisonTimeseries, timeseries)
-      // let metadata = Belt.Array.concat(comparisonMetadata, metadata)
+      let metadata = Belt.Array.concat(comparisonMetadata, metadata)
 
-      // let xTicks = Belt.Array.reduceWithIndex(timeseries, Belt.Map.Int.empty, (acc, row, index) => {
-      //   // Use indexed instead of dates. This allows us to map to commits.
-      //   Belt.Array.set(row, 0, float_of_int(index))->ignore
-      //   let tick = switch Belt.Array.get(metadata, index) {
-      //   | Some(xMetadata) =>
-      //     let xValue = xMetadata["commit"]
-      //     DataHelpers.trimCommit(xValue)
-      //   | None => "Unknown"
-      //   }
+      let xTicks = Belt.Array.reduceWithIndex(timeseries, Belt.Map.Int.empty, (acc, row, index) => {
+        // Use indexed instead of dates. This allows us to map to commits.
+        Belt.Array.set(row, 0, float_of_int(index))->ignore
+        let tick = switch Belt.Array.get(metadata, index) {
+        | Some(xMetadata) =>
+          let xValue = xMetadata["commit"]
+          DataHelpers.trimCommit(xValue)
+        | None => "Unknown"
+        }
+        Belt.Map.Int.set(acc, index, tick)
+      })
 
-      //   Belt.Map.Int.set(acc, index, tick)
-      // })
+      let annotations = if Belt.Array.length(comparisonTimeseries) > 0 {
+        let firstPullX = Belt.Array.length(comparisonTimeseries)
+        [
+          {
+            "series": "value",
+            "x": firstPullX,
+            "icon": "/branch.svg",
+            "text": "Open PR on GitHub",
+            "width": 21,
+            "height": 21,
+            // "clickHandler": (_annotation, _point, _dygraph, _event) => {
+            //   switch pullNumber {
+            //   | Some(pullNumber) =>
+            //     DomHelpers.window->DomHelpers.windowOpen(
+            //       "https://github.com/" ++ repoId ++ "/pull/" ++ string_of_int(pullNumber),
+            //     )
+            //   | None => ()
+            //   }
+            // },
+          },
+        ]
+      } else {
+        []
+      }
 
-      // let annotations = if Belt.Array.length(comparisonTimeseries) > 0 {
-      //   let firstPullX = Belt.Array.length(comparisonTimeseries)
-      //   Some([
-      //     {
-      //       "series": "value",
-      //       "x": firstPullX,
-      //       "icon": "/branch.svg",
-      //       "text": "Open PR on GitHub",
-      //       "width": 21,
-      //       "height": 21,
-      //       "clickHandler": (_annotation, _point, _dygraph, _event) => {
-      //         switch pullNumber {
-      //         | Some(pullNumber) =>
-      //           DomHelpers.window->DomHelpers.windowOpen(
-      //             "https://github.com/" ++ repoId ++ "/pull/" ++ string_of_int(pullNumber),
-      //           )
-      //         | None => ()
-      //         }
-      //       },
-      //     },
-      //   ])
-      // } else {
-      //   None
-      // }
-
-      //     let getRandomInt = (max: int) => {
-      //       Js.Math.floor(Js.Math.random() *. float_of_int(Js.Math.floor(float_of_int(max))))
-      //     }
-
-      //     let getRandomData = (n: int) =>
-      //       `Date,Temperature
-      //   2008-05-07,${getRandomInt(n)->string_of_int}
-      //   2008-05-08,${getRandomInt(n)->string_of_int}
-      //   2008-05-09,${getRandomInt(n)->string_of_int}
-      //   2008-05-10,${getRandomInt(n)->string_of_int}
-      //   2008-05-11,${getRandomInt(n)->string_of_int}
-      //   2008-05-12,${getRandomInt(n)->string_of_int}
-      //   2008-05-13,${getRandomInt(n)->string_of_int}
-      //   2008-05-14,${getRandomInt(n)->string_of_int}
-      //   2008-05-15,${getRandomInt(n)->string_of_int}
-      //   2008-05-16,${getRandomInt(n)->string_of_int}
-      //   2008-05-17,${getRandomInt(n)->string_of_int}
-      //   2008-05-18,${getRandomInt(n)->string_of_int}
-      //   2008-05-19,${getRandomInt(n)->string_of_int}
-      //   2008-05-20,${getRandomInt(n)->string_of_int}
-      //   2008-05-21,${getRandomInt(n)->string_of_int}
-      //  `
-
-      // <LineGraphMine key=metricName data={getRandomData(100)} />
-
-      // <LineGraph key=metricName title=metricName data={timeseries->Belt.Array.sliceToEnd(-20)} />
       // <LineGraph
       //   onXLabelClick=goToCommitLink
       //   onRender=onGraphRender
@@ -249,10 +222,10 @@ let make = (
       //   ?annotations
       //   labels=["idx", "value"]
       // />
-      (metricName, timeseries->Belt.Array.sliceToEnd(-20))
+      (metricName, xTicks, timeseries->Belt.Array.sliceToEnd(-20), annotations)
     })
     ->Belt.Map.String.valuesToArray
-  , [dataByMetricName])
+  }, [dataByMetricName])
 
   <details className={Sx.make([Sx.w.full])} open_=true>
     <summary className={Sx.make([Sx.pointer])}>
@@ -261,7 +234,11 @@ let make = (
     <Column sx=[Sx.mt.xl]>
       <Flex wrap=true>
         {metric_graphs
-        ->Belt.Array.map(((metricName, data)) => <LineGraph key=metricName title=metricName data />)
+        ->Belt.Array.map(((metricName, xTicks, data, annotations)) =>
+          <LineGraph
+            key=metricName title=metricName xTicks data annotations labels=["idx", "value"] testName
+          />
+        )
         ->Rx.array}
       </Flex>
     </Column>
