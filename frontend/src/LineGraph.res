@@ -79,6 +79,7 @@ let defaultOptions = (
   ~yLabel=?,
   ~labels=?,
   ~onClick=?,
+  ~data=[],
   ~xLabelFormatter=?,
   (),
 ) => {
@@ -86,6 +87,7 @@ let defaultOptions = (
     xTicks->Belt.Option.map(convertTicks)->Belt.Option.map((x, ()) => x)->Js.Null.fromOption
   }
   {
+    "file": data,
     "axes": {
       "x": {
         "drawGrid": false,
@@ -181,7 +183,6 @@ let make = React.memo((~sx as uSx=[],
 ~data) => {
   let graphDivRef = React.useRef(Js.Nullable.null)
   let graphRef = React.useRef(None)
-  Js.log2(testName, title->Belt.Option.getWithDefault("No title"))
   React.useEffect1(() => {
     let options = defaultOptions(
       ~yLabel?,
@@ -209,17 +210,25 @@ let make = React.memo((~sx as uSx=[],
     )
   }, [])
 
-  React.useEffect1(() => {
+  React.useLayoutEffect2(() => {
     switch graphRef.current {
     | None => Js.log("no update because no graphReg")
     | Some(graph) => {
-        Js.log("update data")
-        graph->updateOptions({"file": data})
+        let options = defaultOptions(
+          ~yLabel?,
+          ~labels?,
+          ~xTicks?,
+          ~data,
+          ~legendFormatter=Legend.format(~xTicks?),
+          (),
+        )
+        graph->updateOptions(options)
+        graph->setAnnotations(annotations)
       }
     }
 
     None
-  }, [data])
+  }, (data, annotations))
 
   let title = switch title {
   | Some(title) => <h3 className={Sx.make([Sx.text.center])}> {React.string(title)} </h3>

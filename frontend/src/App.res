@@ -128,7 +128,7 @@ module Graphs = {
       ->Belt.Array.map(((dataByMetricName, comparison, testName)) =>
         <BenchMarkA repoId pullNumber key={testName} testName dataByMetricName comparison />
       )
-      ->Rx.array}
+      ->Rx.array(~empty=<Message text="No data for selected interval." />)}
       // {graphs->Rx.array(~empty=<Message text="No data for selected interval." />)}
     </Column>
   })
@@ -220,7 +220,7 @@ module RepoView = {
     | Error({networkError: None}) => <div> {"Unknown Error"->Rx.text} </div>
     | Fetching => Rx.text("Loading...")
     | PartialData(data, _) => React.null
-    | Data(data) => 
+    | Data(data) =>
       let repoIds = data.allRepoIds->Belt.Array.map(obj => obj.repo_id)
 
       let sidebar =
