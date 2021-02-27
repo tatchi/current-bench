@@ -124,14 +124,6 @@ let make = (
   ~dataByMetricName,
 ) => {
   let graphRefs = ref(list{})
-  let onGraphRender = graph => graphRefs := Belt.List.add(graphRefs.contents, graph)
-
-  // React.useEffect1(() => {
-  //   if synchronize {
-  //     LineGraph.synchronize(graphRefs.contents->Belt.List.toArray)
-  //   }
-  //   None
-  // }, [synchronize])
 
   let metric_table = {
     <Table>
@@ -232,6 +224,7 @@ let make = (
       <Text sx=[Sx.text.xl2, Sx.text.bold]> {Rx.text(testName)} </Text>
     </summary>
     <Column sx=[Sx.mt.xl]>
+      metric_table
       <Flex wrap=true>
         {metric_graphs
         ->Belt.Array.map(((metricName, xTicks, data, annotations)) =>

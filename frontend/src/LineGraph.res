@@ -162,8 +162,6 @@ let make = React.memo((~sx as uSx=[],
 ~yLabel: option<string>=?,
 ~labels: option<array<string>>=?,
 ~testName: string,
-// ~xLabelFormatter=?,
-// ~onRender: option<graph => unit>=?,
 // ~onXLabelClick=?,
 ~annotations: array<{
   // "clickHandler": ('a, 'b, 'c, 'd) => unit,
@@ -183,7 +181,6 @@ let make = React.memo((~sx as uSx=[],
       ~yLabel?,
       ~labels?,
       ~xTicks?,
-      // ~xLabelFormatter?,
       ~legendFormatter=Legend.format(~xTicks?),
       (),
     )
@@ -206,17 +203,6 @@ let make = React.memo((~sx as uSx=[],
         }
       }
     }
-
-    // let graph = init(graphRef.current, data, options)
-    // switch onRender {
-    // | Some(f) => f(graph)
-    // | None => ()
-    // }
-    // if Array.length(annotations) > 0 {
-    //   graph->ready(() => {
-    //     graph->setAnnotations(annotations)
-    //   })
-    // }
 
     // switch onXLabelClick {
     // | Some(handler) =>
