@@ -236,7 +236,7 @@ let make = (
             annotations
             labels=["idx", "value"]
             testName
-            onXLabelClick=goToCommitLink
+            // onXLabelClick=goToCommitLink
           />
         )
         ->Rx.array}

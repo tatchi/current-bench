@@ -16,6 +16,9 @@ external setAnnotations: (graph, array<{.."series": string, "x": 'floatOrDate}>)
 @send
 external destroy: graph => unit = "destroy"
 
+@send
+external updateOptions: (graph, 'options) => unit = "updateOptions"
+
 type global
 @module("dygraphs")
 external global: global = "default"
@@ -159,29 +162,27 @@ let graphSx = [Sx.absolute, Sx.t.xl3, Sx.b.zero, Sx.l.zero, Sx.r.zero]
 let containerSx = [Sx.mt.xl2, Sx.relative, Sx.unsafe("width", "480px"), Sx.h.xl5]
 
 @react.component
-let make = React.memo((
-  ~sx as uSx=[],
-  ~title=?,
-  ~xTicks: option<Belt.Map.Int.t<string>>=?,
-  ~yLabel: option<string>=?,
-  ~labels: option<array<string>>=?,
-  ~testName: string,
-  ~onXLabelClick=?,
-  ~annotations: array<{
-    "clickHandler": (annotation, point, graph, event) => unit,
-    "height": int,
-    "icon": string,
-    "series": string,
-    "text": string,
-    "width": int,
-    "x": int,
-  }>,
-  ~data,
-) => {
+let make = React.memo((~sx as uSx=[],
+~title=?,
+~xTicks: option<Belt.Map.Int.t<string>>=?,
+~yLabel: option<string>=?,
+~labels: option<array<string>>=?,
+~testName: string,
+// ~onXLabelClick=?,
+~annotations: array<{
+  "clickHandler": (annotation, point, graph, event) => unit,
+  "height": int,
+  "icon": string,
+  "series": string,
+  "text": string,
+  "width": int,
+  "x": int,
+}>,
+~data) => {
   let graphDivRef = React.useRef(Js.Nullable.null)
+  let graphRef = React.useRef(None)
   Js.log2(testName, title->Belt.Option.getWithDefault("No title"))
-  React.useLayoutEffect1(() => {
-    let graphRef = ref(None)
+  React.useEffect1(() => {
     let options = defaultOptions(
       ~yLabel?,
       ~labels?,
@@ -192,42 +193,32 @@ let make = React.memo((
 
     switch Js.Nullable.toOption(graphDivRef.current) {
     | None => ()
-    | Some(ref) => {
-        graphRef := Some(init(ref, data, options))
-        switch graphRef.contents {
-        | Some(graph) =>
-          if Array.length(annotations) > 0 {
-            graph->ready(() => {
-              if Belt.Option.isNone(graphRef.contents) {
-                Js.log("[IIIIINNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN]")
-              }
-              graph->setAnnotations(annotations)
-            })
-          }
-        | None => ()
-        }
-      }
+    | Some(ref) => graphRef.current = Some(init(ref, data, options))
     }
-
-    // switch onXLabelClick {
-    // | Some(handler) =>
-    //   getElementsByClassName("dygraph-axis-label-x")->Belt.Array.forEach(elem =>
-    //     getElementHTMLonClick(elem, handler)
-    //   )
-    // | None => ()
-    // }
 
     Some(
       _ => {
-        switch graphRef.contents {
+        switch graphRef.current {
         | Some(graph) => {
             graph->destroy
-            graphRef := None
+            graphRef.current = None
           }
         | None => ()
         }
       },
     )
+  }, [])
+
+  React.useEffect1(() => {
+    switch graphRef.current {
+    | None => Js.log("no update because no graphReg")
+    | Some(graph) => {
+        Js.log("update data")
+        graph->updateOptions({"file": data})
+      }
+    }
+
+    None
   }, [data])
 
   let title = switch title {
