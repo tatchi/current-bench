@@ -1147,81 +1147,81 @@ module Modal = {
     </div>
 }
 
-module Showcase = {
-  let data = [
-    [20070101.0, 60.0],
-    [20070102.0, 66.0],
-    [20070103.0, 62.0],
-    [20070104.0, 57.0],
-    [20070105.0, 54.0],
-    [20070106.0, 55.0],
-  ]
+// module Showcase = {
+//   let data = [
+//     [20070101.0, 60.0],
+//     [20070102.0, 66.0],
+//     [20070103.0, 62.0],
+//     [20070104.0, 57.0],
+//     [20070105.0, 54.0],
+//     [20070106.0, 55.0],
+//   ]
 
-  @react.component
-  let make = () => {
-    let (flag, setFlag) = React.useState(() => false)
-    <Column sx=[Sx.p.xl]>
-      <Column spacing=Sx.md>
-        <Heading level=#h1 text="Heading level 1" />
-        <Heading level=#h2 text="Heading level 2" />
-        <Heading level=#h3 text="Heading level 3" />
-        <Heading level=#h4 text="Heading level 4" />
-        <Heading level=#h5 text="Heading level 5" />
-      </Column>
-      <Heading level=#h1 text="Text" />
-      <Column spacing=Sx.xl>
-        <Text> {Rx.string("A simple text component")} </Text>
-        <Text>
-          {Rx.string(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-          )}
-        </Text>
-        <Message sx=[Sx.text.xl] text="Colorless green ideas sleep furiously." />
-      </Column>
-      <Heading level=#h1 text="Buttons" />
-      <Column>
-        <Row spacing=Sx.xl4 alignY=#center alignX=#center>
-          <Button text="Simple" />
-          <Button text="Smaller!" size=#small />
-          <Button text="With icon" icon=Icon.alarm />
-          <Button text="Click me!" size=#small icon=Icon.layers />
-          <Button icon=Icon.layers />
-        </Row>
-        <Code
-          content=`<Button text="Simple" />
-<Button text="Smaller!" size=\`small />
-<Button text="With icon" icon=Icon.alarm />
-<Button text="Click me!" size=\`small icon=Icon.layers />
-<Button icon=Icon.layers />`
-        />
-      </Column>
-      <Heading level=#h1 text="Input and controls" />
-      <Column sx=[Sx.w.half] spacing=Sx.xl>
-        <Slider />
-        <Row spacing=Sx.xl>
-          <Radio
-            label="Something" name="radio" checked={!flag} onChange={_ => setFlag(_ => !flag)}
-          />
-          <Radio
-            label="Something better" name="radio" checked=flag onChange={_ => setFlag(_ => !flag)}
-          />
-        </Row>
-        <Field label="Switch"> <Switch /> </Field>
-        <Row spacing=Sx.xl>
-          <Field label="Unchecked"> <Checkbox name="checkbox" /> </Field>
-          <Field label="Checked"> <Checkbox name="checkbox" defaultChecked=true /> </Field>
-        </Row>
-        <Field label="Field"> <Input placeholder="Input" /> </Field>
-        <Field label="Select">
-          <Select defaultValue="a" onChange=ignore placeholder="Options...">
-            <option value="a"> {Rx.string("a")} </option>
-            <option> {Rx.string("b")} </option>
-            <option> {Rx.string("c")} </option>
-          </Select>
-        </Field>
-        <Field label="Textarea"> <Textarea placeholder="Textarea" /> </Field>
-        <LineGraph data labels=["date", "value"] />
-      </Column>
-    </Column>
-  }
-}
+//   @react.component
+//   let make = () => {
+//     let (flag, setFlag) = React.useState(() => false)
+//     <Column sx=[Sx.p.xl]>
+//       <Column spacing=Sx.md>
+//         <Heading level=#h1 text="Heading level 1" />
+//         <Heading level=#h2 text="Heading level 2" />
+//         <Heading level=#h3 text="Heading level 3" />
+//         <Heading level=#h4 text="Heading level 4" />
+//         <Heading level=#h5 text="Heading level 5" />
+//       </Column>
+//       <Heading level=#h1 text="Text" />
+//       <Column spacing=Sx.xl>
+//         <Text> {Rx.string("A simple text component")} </Text>
+//         <Text>
+//           {Rx.string(
+//             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+//           )}
+//         </Text>
+//         <Message sx=[Sx.text.xl] text="Colorless green ideas sleep furiously." />
+//       </Column>
+//       <Heading level=#h1 text="Buttons" />
+//       <Column>
+//         <Row spacing=Sx.xl4 alignY=#center alignX=#center>
+//           <Button text="Simple" />
+//           <Button text="Smaller!" size=#small />
+//           <Button text="With icon" icon=Icon.alarm />
+//           <Button text="Click me!" size=#small icon=Icon.layers />
+//           <Button icon=Icon.layers />
+//         </Row>
+//         <Code
+//           content=`<Button text="Simple" />
+// <Button text="Smaller!" size=\`small />
+// <Button text="With icon" icon=Icon.alarm />
+// <Button text="Click me!" size=\`small icon=Icon.layers />
+// <Button icon=Icon.layers />`
+//         />
+//       </Column>
+//       <Heading level=#h1 text="Input and controls" />
+//       <Column sx=[Sx.w.half] spacing=Sx.xl>
+//         <Slider />
+//         <Row spacing=Sx.xl>
+//           <Radio
+//             label="Something" name="radio" checked={!flag} onChange={_ => setFlag(_ => !flag)}
+//           />
+//           <Radio
+//             label="Something better" name="radio" checked=flag onChange={_ => setFlag(_ => !flag)}
+//           />
+//         </Row>
+//         <Field label="Switch"> <Switch /> </Field>
+//         <Row spacing=Sx.xl>
+//           <Field label="Unchecked"> <Checkbox name="checkbox" /> </Field>
+//           <Field label="Checked"> <Checkbox name="checkbox" defaultChecked=true /> </Field>
+//         </Row>
+//         <Field label="Field"> <Input placeholder="Input" /> </Field>
+//         <Field label="Select">
+//           <Select defaultValue="a" onChange=ignore placeholder="Options...">
+//             <option value="a"> {Rx.string("a")} </option>
+//             <option> {Rx.string("b")} </option>
+//             <option> {Rx.string("c")} </option>
+//           </Select>
+//         </Field>
+//         <Field label="Textarea"> <Textarea placeholder="Textarea" /> </Field>
+//         <LineGraph data labels=["date", "value"] />
+//       </Column>
+//     </Column>
+//   }
+// }

@@ -1,7 +1,7 @@
 type graph
 
 @new @module("dygraphs")
-external init: ('element, array<array<float>>, 'options) => graph = "default"
+external init: ('element, string, Js.Dict.t<string>) => graph = "default"
 
 @send
 external ready: (graph, unit => unit) => unit = "ready"
@@ -153,74 +153,25 @@ let graphSx = [Sx.absolute, Sx.t.xl3, Sx.b.zero, Sx.l.zero, Sx.r.zero]
 let containerSx = [Sx.mt.xl2, Sx.relative, Sx.unsafe("width", "480px"), Sx.h.xl5]
 
 @react.component
-let make = React.memo((~sx as uSx=[],
-~title=?,
-// ~xTicks=?,
-// ~yLabel=?,
-// ~labels=?,
-// ~xLabelFormatter=?,
-// ~onRender: option<graph => unit>=?,
-// ~onXLabelClick=?,
-// ~annotations=[],
-~data) => {
+let make = (~data) => {
   let graphRef = React.useRef(Js.Nullable.null)
-  React.useLayoutEffect1(() => {
-    // let options = defaultOptions(
-    //   ~yLabel?,
-    //   ~labels?,
-    //   ~xTicks?,
-    //   ~xLabelFormatter?,
-    //   ~legendFormatter=Legend.format(~xTicks?),
-    //   (),
-    // )
 
+  React.useLayoutEffect1(() => {
     switch Js.Nullable.toOption(graphRef.current) {
     | None => ()
     | Some(ref) => {
         let graph = init(ref, data, Js.Dict.empty())
+        Js.log("in")
       }
     }
-
-    // let graph = init(graphRef.current, data, options)
-    // switch onRender {
-    // | Some(f) => f(graph)
-    // | None => ()
-    // }
-    // if Array.length(annotations) > 0 {
-    //   graph->ready(() => {
-    //     graph->setAnnotations(annotations)
-    //   })
-    // }
-
-    // switch onXLabelClick {
-    // | Some(handler) =>
-    //   getElementsByClassName("dygraph-axis-label-x")->Belt.Array.forEach(elem =>
-    //     getElementHTMLonClick(elem, handler)
-    //   )
-    // | None => ()
-    // }
-
-    None
+    Some(
+      () => {
+        Js.log("UNMOUNT")
+      },
+    )
   }, [data])
 
-  let title = switch title {
-  | Some(title) => <h3 className={Sx.make([Sx.text.center])}> {React.string(title)} </h3>
-  | None => React.null
-  }
-
-  let sx = Array.append(uSx, containerSx)
-
-  <div className={Sx.make(sx)}>
-    title <div className={Sx.make(graphSx)} ref={ReactDOMRe.Ref.domRef(graphRef)} />
+  <div className={Sx.make(containerSx)}>
+    <div className={Sx.make(graphSx)} ref={ReactDOMRe.Ref.domRef(graphRef)} />
   </div>
-})
-
-let synchronize = graphs =>
-  _synchronize(
-    global,
-    graphs,
-    {
-      "zoom": true,
-      "selection": true,
-    },
-  )
+}

@@ -64,7 +64,14 @@ let getTestMetrics = (item: BenchmarkMetrics.t): BenchmarkTest.testMetrics => {
   }
 }
 
-module BenchmarkView = {
+module BenchMarkA = {
+  @react.component
+  let make = React.memo((~repoId, ~pullNumber, ~testName, ~dataByMetricName, ~comparison) => {
+    <BenchmarkTest repoId pullNumber key={testName} testName dataByMetricName comparison />
+  })
+}
+
+module Graphs = {
   let decodeRunAt = runAt => runAt->Js.Json.decodeString->Belt.Option.map(Js.Date.fromString)
 
   let decodeMetrics = metrics =>
@@ -91,7 +98,43 @@ module BenchmarkView = {
       })
     })
   }
+  @react.component
+  let make = React.memo((~repoId, ~pullNumber, ~data: GetBenchmarks.t) => {
+    let benchmarkDataByTestName = React.useMemo2(() => {
+      Js.log("compute benchmarkData")
+      data.benchmarks->makeBenchmarkData
+    }, (data.benchmarks, makeBenchmarkData))
+    let comparisonBenchmarkDataByTestName = React.useMemo2(
+      () => data.comparisonBenchmarks->Belt.Array.reverse->makeBenchmarkData,
+      (data.comparisonBenchmarks, makeBenchmarkData),
+    )
 
+    let graphsData = React.useMemo1(() => {
+      benchmarkDataByTestName
+      ->Belt.Map.String.mapWithKey((testName, dataByMetricName) => {
+        let comparison = Belt.Map.String.getWithDefault(
+          comparisonBenchmarkDataByTestName,
+          testName,
+          Belt.Map.String.empty,
+        )
+        (dataByMetricName, comparison, testName)
+        // <BenchmarkTest repoId pullNumber key={testName} testName dataByMetricName comparison />
+      })
+      ->Belt.Map.String.valuesToArray
+    }, [benchmarkDataByTestName])
+
+    <Column spacing=Sx.xl3>
+      {graphsData
+      ->Belt.Array.map(((dataByMetricName, comparison, testName)) =>
+        <BenchMarkA repoId pullNumber key={testName} testName dataByMetricName comparison />
+      )
+      ->Rx.array}
+      // {graphs->Rx.array(~empty=<Message text="No data for selected interval." />)}
+    </Column>
+  })
+}
+
+module BenchmarkView = {
   @react.component
   let make = (~repoId, ~pullNumber=?, ~startDate, ~endDate) => {
     let ({ReasonUrql.Hooks.response: response}, _) = {
@@ -110,27 +153,7 @@ module BenchmarkView = {
     | Fetching => Rx.text("Loading...")
     | Data(data)
     | PartialData(data, _) =>
-      Js.log(data)
-      let benchmarkDataByTestName = data.benchmarks->makeBenchmarkData
-      let comparisonBenchmarkDataByTestName =
-        data.comparisonBenchmarks->Belt.Array.reverse->makeBenchmarkData
-
-      let graphs = {
-        benchmarkDataByTestName
-        ->Belt.Map.String.mapWithKey((testName, dataByMetricName) => {
-          let comparison = Belt.Map.String.getWithDefault(
-            comparisonBenchmarkDataByTestName,
-            testName,
-            Belt.Map.String.empty,
-          )
-          <BenchmarkTest repoId pullNumber key={testName} testName dataByMetricName comparison />
-        })
-        ->Belt.Map.String.valuesToArray
-      }
-
-      <Column spacing=Sx.xl3>
-        {graphs->Rx.array(~empty=<Message text="No data for selected interval." />)}
-      </Column>
+      <Graphs repoId pullNumber data />
     }
   }
 }
@@ -196,8 +219,8 @@ module RepoView = {
     | Error({networkError: Some(_)}) => <div> {"Network Error"->Rx.text} </div>
     | Error({networkError: None}) => <div> {"Unknown Error"->Rx.text} </div>
     | Fetching => Rx.text("Loading...")
-    | Data(data)
-    | PartialData(data, _) =>
+    | PartialData(data, _) => React.null
+    | Data(data) => 
       let repoIds = data.allRepoIds->Belt.Array.map(obj => obj.repo_id)
 
       let sidebar =
