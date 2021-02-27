@@ -1,4 +1,7 @@
 type graph
+type annotation
+type point
+type event
 
 @new @module("dygraphs")
 external init: ('element, array<array<float>>, 'options) => graph = "default"
@@ -156,23 +159,25 @@ let graphSx = [Sx.absolute, Sx.t.xl3, Sx.b.zero, Sx.l.zero, Sx.r.zero]
 let containerSx = [Sx.mt.xl2, Sx.relative, Sx.unsafe("width", "480px"), Sx.h.xl5]
 
 @react.component
-let make = React.memo((~sx as uSx=[],
-~title=?,
-~xTicks: option<Belt.Map.Int.t<string>>=?,
-~yLabel: option<string>=?,
-~labels: option<array<string>>=?,
-~testName: string,
-// ~onXLabelClick=?,
-~annotations: array<{
-  // "clickHandler": ('a, 'b, 'c, 'd) => unit,
-  "height": int,
-  "icon": string,
-  "series": string,
-  "text": string,
-  "width": int,
-  "x": int,
-}>,
-~data) => {
+let make = React.memo((
+  ~sx as uSx=[],
+  ~title=?,
+  ~xTicks: option<Belt.Map.Int.t<string>>=?,
+  ~yLabel: option<string>=?,
+  ~labels: option<array<string>>=?,
+  ~testName: string,
+  ~onXLabelClick=?,
+  ~annotations: array<{
+    "clickHandler": (annotation, point, graph, event) => unit,
+    "height": int,
+    "icon": string,
+    "series": string,
+    "text": string,
+    "width": int,
+    "x": int,
+  }>,
+  ~data,
+) => {
   let graphDivRef = React.useRef(Js.Nullable.null)
   Js.log2(testName, title->Belt.Option.getWithDefault("No title"))
   React.useLayoutEffect1(() => {

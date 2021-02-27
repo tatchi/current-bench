@@ -189,15 +189,15 @@ let make = (
             "text": "Open PR on GitHub",
             "width": 21,
             "height": 21,
-            // "clickHandler": (_annotation, _point, _dygraph, _event) => {
-            //   switch pullNumber {
-            //   | Some(pullNumber) =>
-            //     DomHelpers.window->DomHelpers.windowOpen(
-            //       "https://github.com/" ++ repoId ++ "/pull/" ++ string_of_int(pullNumber),
-            //     )
-            //   | None => ()
-            //   }
-            // },
+            "clickHandler": (_annotation, _point, _dygraph, _event) => {
+              switch pullNumber {
+              | Some(pullNumber) =>
+                DomHelpers.window->DomHelpers.windowOpen(
+                  "https://github.com/" ++ repoId ++ "/pull/" ++ string_of_int(pullNumber),
+                )
+              | None => ()
+              }
+            },
           },
         ]
       } else {
@@ -229,7 +229,14 @@ let make = (
         {metric_graphs
         ->Belt.Array.map(((metricName, xTicks, data, annotations)) =>
           <LineGraph
-            key=metricName title=metricName xTicks data annotations labels=["idx", "value"] testName
+            key=metricName
+            title=metricName
+            xTicks
+            data
+            annotations
+            labels=["idx", "value"]
+            testName
+            onXLabelClick=goToCommitLink
           />
         )
         ->Rx.array}
