@@ -119,12 +119,9 @@ let make = (
   ~repoId,
   ~pullNumber,
   ~testName,
-  ~synchronize=false,
   ~comparison=Belt.Map.String.empty,
   ~dataByMetricName,
 ) => {
-  let graphRefs = ref(list{})
-
   let metric_table = {
     <Table>
       <thead>
@@ -155,7 +152,7 @@ let make = (
     </Table>
   }
 
-  let metric_graphs = React.useMemo1(() => {
+  let graph_metrics = React.useMemo1(() => {
     dataByMetricName
     ->Belt.Map.String.mapWithKey((metricName, (timeseries, metadata)) => {
       let (comparisonTimeseries, comparisonMetadata) = Belt.Map.String.getWithDefault(
@@ -203,17 +200,6 @@ let make = (
       } else {
         []
       }
-
-      // <LineGraph
-      //   onXLabelClick=goToCommitLink
-      //   onRender=onGraphRender
-      //   key=metricName
-      //   title=metricName
-      //   xTicks
-      //   data={timeseries->Belt.Array.sliceToEnd(-20)}
-      //   ?annotations
-      //   labels=["idx", "value"]
-      // />
       (metricName, xTicks, timeseries->Belt.Array.sliceToEnd(-20), annotations)
     })
     ->Belt.Map.String.valuesToArray
@@ -226,7 +212,7 @@ let make = (
     <Column sx=[Sx.mt.xl]>
       metric_table
       <Flex wrap=true>
-        {metric_graphs
+        {graph_metrics
         ->Belt.Array.map(((metricName, xTicks, data, annotations)) =>
           <LineGraph
             key=metricName
@@ -235,8 +221,7 @@ let make = (
             data
             annotations
             labels=["idx", "value"]
-            testName
-            // onXLabelClick=goToCommitLink
+            onXLabelClick=goToCommitLink
           />
         )
         ->Rx.array}

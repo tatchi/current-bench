@@ -164,25 +164,27 @@ let graphSx = [Sx.absolute, Sx.t.xl3, Sx.b.zero, Sx.l.zero, Sx.r.zero]
 let containerSx = [Sx.mt.xl2, Sx.relative, Sx.unsafe("width", "480px"), Sx.h.xl5]
 
 @react.component
-let make = React.memo((~sx as uSx=[],
-~title=?,
-~xTicks: option<Belt.Map.Int.t<string>>=?,
-~yLabel: option<string>=?,
-~labels: option<array<string>>=?,
-~testName: string,
-// ~onXLabelClick=?,
-~annotations: array<{
-  "clickHandler": (annotation, point, graph, event) => unit,
-  "height": int,
-  "icon": string,
-  "series": string,
-  "text": string,
-  "width": int,
-  "x": int,
-}>,
-~data) => {
+let make = React.memo((
+  ~sx as uSx=[],
+  ~title=?,
+  ~xTicks: option<Belt.Map.Int.t<string>>=?,
+  ~yLabel: option<string>=?,
+  ~labels: option<array<string>>=?,
+  ~onXLabelClick=?,
+  ~data,
+  ~annotations: array<{
+    "clickHandler": (annotation, point, graph, event) => unit,
+    "height": int,
+    "icon": string,
+    "series": string,
+    "text": string,
+    "width": int,
+    "x": int,
+  }>,
+) => {
   let graphDivRef = React.useRef(Js.Nullable.null)
   let graphRef = React.useRef(None)
+
   React.useEffect1(() => {
     let options = defaultOptions(
       ~yLabel?,
@@ -194,7 +196,20 @@ let make = React.memo((~sx as uSx=[],
 
     switch Js.Nullable.toOption(graphDivRef.current) {
     | None => ()
-    | Some(ref) => graphRef.current = Some(init(ref, data, options))
+    | Some(ref) => {
+        let graph = init(ref, data, options)
+        graph->setAnnotations(annotations)
+
+        switch onXLabelClick {
+        | Some(handler) =>
+          getElementsByClassName("dygraph-axis-label-x")->Belt.Array.forEach(elem =>
+            getElementHTMLonClick(elem, handler)
+          )
+        | None => ()
+        }
+
+        graphRef.current = Some(graph)
+      }
     }
 
     Some(
@@ -212,7 +227,7 @@ let make = React.memo((~sx as uSx=[],
 
   React.useLayoutEffect2(() => {
     switch graphRef.current {
-    | None => Js.log("no update because no graphReg")
+    | None => ()
     | Some(graph) => {
         let options = defaultOptions(
           ~yLabel?,
@@ -224,9 +239,16 @@ let make = React.memo((~sx as uSx=[],
         )
         graph->updateOptions(options)
         graph->setAnnotations(annotations)
+
+        switch onXLabelClick {
+        | Some(handler) =>
+          getElementsByClassName("dygraph-axis-label-x")->Belt.Array.forEach(elem =>
+            getElementHTMLonClick(elem, handler)
+          )
+        | None => ()
+        }
       }
     }
-
     None
   }, (data, annotations))
 
@@ -241,13 +263,3 @@ let make = React.memo((~sx as uSx=[],
     title <div className={Sx.make(graphSx)} ref={ReactDOMRe.Ref.domRef(graphDivRef)} />
   </div>
 })
-
-let synchronize = graphs =>
-  _synchronize(
-    global,
-    graphs,
-    {
-      "zoom": true,
-      "selection": true,
-    },
-  )

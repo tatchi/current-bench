@@ -64,14 +64,7 @@ let getTestMetrics = (item: BenchmarkMetrics.t): BenchmarkTest.testMetrics => {
   }
 }
 
-module BenchMarkA = {
-  @react.component
-  let make = React.memo((~repoId, ~pullNumber, ~testName, ~dataByMetricName, ~comparison) => {
-    <BenchmarkTest repoId pullNumber key={testName} testName dataByMetricName comparison />
-  })
-}
-
-module Graphs = {
+module Benchmark = {
   let decodeRunAt = runAt => runAt->Js.Json.decodeString->Belt.Option.map(Js.Date.fromString)
 
   let decodeMetrics = metrics =>
@@ -101,7 +94,6 @@ module Graphs = {
   @react.component
   let make = React.memo((~repoId, ~pullNumber, ~data: GetBenchmarks.t) => {
     let benchmarkDataByTestName = React.useMemo2(() => {
-      Js.log("compute benchmarkData")
       data.benchmarks->makeBenchmarkData
     }, (data.benchmarks, makeBenchmarkData))
     let comparisonBenchmarkDataByTestName = React.useMemo2(
@@ -118,7 +110,6 @@ module Graphs = {
           Belt.Map.String.empty,
         )
         (dataByMetricName, comparison, testName)
-        // <BenchmarkTest repoId pullNumber key={testName} testName dataByMetricName comparison />
       })
       ->Belt.Map.String.valuesToArray
     }, [benchmarkDataByTestName])
@@ -126,10 +117,9 @@ module Graphs = {
     <Column spacing=Sx.xl3>
       {graphsData
       ->Belt.Array.map(((dataByMetricName, comparison, testName)) =>
-        <BenchMarkA repoId pullNumber key={testName} testName dataByMetricName comparison />
+        <BenchmarkTest repoId pullNumber key={testName} testName dataByMetricName comparison />
       )
       ->Rx.array(~empty=<Message text="No data for selected interval." />)}
-      // {graphs->Rx.array(~empty=<Message text="No data for selected interval." />)}
     </Column>
   })
 }
@@ -153,7 +143,7 @@ module BenchmarkView = {
     | Fetching => Rx.text("Loading...")
     | Data(data)
     | PartialData(data, _) =>
-      <Graphs repoId pullNumber data />
+      <Benchmark repoId pullNumber data />
     }
   }
 }
@@ -219,8 +209,8 @@ module RepoView = {
     | Error({networkError: Some(_)}) => <div> {"Network Error"->Rx.text} </div>
     | Error({networkError: None}) => <div> {"Unknown Error"->Rx.text} </div>
     | Fetching => Rx.text("Loading...")
-    | PartialData(data, _) => React.null
-    | Data(data) =>
+    | Data(data)
+    | PartialData(data, _) =>
       let repoIds = data.allRepoIds->Belt.Array.map(obj => obj.repo_id)
 
       let sidebar =
