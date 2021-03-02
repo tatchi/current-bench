@@ -1,0 +1,1113 @@
+schema {
+  query: query_root
+  mutation: mutation_root
+  subscription: subscription_root
+}
+
+"""
+columns and relationships of "benchmarks"
+"""
+type benchmarks {
+  benchmark_name: String
+  branch: String
+  commit: String!
+  metrics(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  pull_number: Int
+  repo_id: String!
+  run_at: timestamp!
+  test_name: String!
+}
+
+"""
+aggregated selection of "benchmarks"
+"""
+type benchmarks_aggregate {
+  aggregate: benchmarks_aggregate_fields
+  nodes: [benchmarks!]!
+}
+
+"""
+aggregate fields of "benchmarks"
+"""
+type benchmarks_aggregate_fields {
+  avg: benchmarks_avg_fields
+  count(columns: [benchmarks_select_column!], distinct: Boolean): Int
+  max: benchmarks_max_fields
+  min: benchmarks_min_fields
+  stddev: benchmarks_stddev_fields
+  stddev_pop: benchmarks_stddev_pop_fields
+  stddev_samp: benchmarks_stddev_samp_fields
+  sum: benchmarks_sum_fields
+  var_pop: benchmarks_var_pop_fields
+  var_samp: benchmarks_var_samp_fields
+  variance: benchmarks_variance_fields
+}
+
+"""
+order by aggregate values of table "benchmarks"
+"""
+input benchmarks_aggregate_order_by {
+  avg: benchmarks_avg_order_by
+  count: order_by
+  max: benchmarks_max_order_by
+  min: benchmarks_min_order_by
+  stddev: benchmarks_stddev_order_by
+  stddev_pop: benchmarks_stddev_pop_order_by
+  stddev_samp: benchmarks_stddev_samp_order_by
+  sum: benchmarks_sum_order_by
+  var_pop: benchmarks_var_pop_order_by
+  var_samp: benchmarks_var_samp_order_by
+  variance: benchmarks_variance_order_by
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input benchmarks_append_input {
+  metrics: jsonb
+}
+
+"""
+input type for inserting array relation for remote table "benchmarks"
+"""
+input benchmarks_arr_rel_insert_input {
+  data: [benchmarks_insert_input!]!
+}
+
+"""aggregate avg on columns"""
+type benchmarks_avg_fields {
+  pull_number: Float
+}
+
+"""
+order by avg() on columns of table "benchmarks"
+"""
+input benchmarks_avg_order_by {
+  pull_number: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "benchmarks". All fields are combined with a logical 'AND'.
+"""
+input benchmarks_bool_exp {
+  _and: [benchmarks_bool_exp]
+  _not: benchmarks_bool_exp
+  _or: [benchmarks_bool_exp]
+  benchmark_name: String_comparison_exp
+  branch: String_comparison_exp
+  commit: String_comparison_exp
+  metrics: jsonb_comparison_exp
+  pull_number: Int_comparison_exp
+  repo_id: String_comparison_exp
+  run_at: timestamp_comparison_exp
+  test_name: String_comparison_exp
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input benchmarks_delete_at_path_input {
+  metrics: [String]
+}
+
+"""
+delete the array element with specified index (negative integers count from the
+end). throws an error if top level container is not an array
+"""
+input benchmarks_delete_elem_input {
+  metrics: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input benchmarks_delete_key_input {
+  metrics: String
+}
+
+"""
+input type for incrementing integer column in table "benchmarks"
+"""
+input benchmarks_inc_input {
+  pull_number: Int
+}
+
+"""
+input type for inserting data into table "benchmarks"
+"""
+input benchmarks_insert_input {
+  benchmark_name: String
+  branch: String
+  commit: String
+  metrics: jsonb
+  pull_number: Int
+  repo_id: String
+  run_at: timestamp
+  test_name: String
+}
+
+"""aggregate max on columns"""
+type benchmarks_max_fields {
+  benchmark_name: String
+  branch: String
+  commit: String
+  pull_number: Int
+  repo_id: String
+  run_at: timestamp
+  test_name: String
+}
+
+"""
+order by max() on columns of table "benchmarks"
+"""
+input benchmarks_max_order_by {
+  benchmark_name: order_by
+  branch: order_by
+  commit: order_by
+  pull_number: order_by
+  repo_id: order_by
+  run_at: order_by
+  test_name: order_by
+}
+
+"""aggregate min on columns"""
+type benchmarks_min_fields {
+  benchmark_name: String
+  branch: String
+  commit: String
+  pull_number: Int
+  repo_id: String
+  run_at: timestamp
+  test_name: String
+}
+
+"""
+order by min() on columns of table "benchmarks"
+"""
+input benchmarks_min_order_by {
+  benchmark_name: order_by
+  branch: order_by
+  commit: order_by
+  pull_number: order_by
+  repo_id: order_by
+  run_at: order_by
+  test_name: order_by
+}
+
+"""
+response of any mutation on the table "benchmarks"
+"""
+type benchmarks_mutation_response {
+  """number of affected rows by the mutation"""
+  affected_rows: Int!
+
+  """data of the affected rows by the mutation"""
+  returning: [benchmarks!]!
+}
+
+"""
+input type for inserting object relation for remote table "benchmarks"
+"""
+input benchmarks_obj_rel_insert_input {
+  data: benchmarks_insert_input!
+}
+
+"""
+ordering options when selecting data from "benchmarks"
+"""
+input benchmarks_order_by {
+  benchmark_name: order_by
+  branch: order_by
+  commit: order_by
+  metrics: order_by
+  pull_number: order_by
+  repo_id: order_by
+  run_at: order_by
+  test_name: order_by
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input benchmarks_prepend_input {
+  metrics: jsonb
+}
+
+"""
+select columns of table "benchmarks"
+"""
+enum benchmarks_select_column {
+  """column name"""
+  benchmark_name
+
+  """column name"""
+  branch
+
+  """column name"""
+  commit
+
+  """column name"""
+  metrics
+
+  """column name"""
+  pull_number
+
+  """column name"""
+  repo_id
+
+  """column name"""
+  run_at
+
+  """column name"""
+  test_name
+}
+
+"""
+input type for updating data in table "benchmarks"
+"""
+input benchmarks_set_input {
+  benchmark_name: String
+  branch: String
+  commit: String
+  metrics: jsonb
+  pull_number: Int
+  repo_id: String
+  run_at: timestamp
+  test_name: String
+}
+
+"""aggregate stddev on columns"""
+type benchmarks_stddev_fields {
+  pull_number: Float
+}
+
+"""
+order by stddev() on columns of table "benchmarks"
+"""
+input benchmarks_stddev_order_by {
+  pull_number: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type benchmarks_stddev_pop_fields {
+  pull_number: Float
+}
+
+"""
+order by stddev_pop() on columns of table "benchmarks"
+"""
+input benchmarks_stddev_pop_order_by {
+  pull_number: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type benchmarks_stddev_samp_fields {
+  pull_number: Float
+}
+
+"""
+order by stddev_samp() on columns of table "benchmarks"
+"""
+input benchmarks_stddev_samp_order_by {
+  pull_number: order_by
+}
+
+"""aggregate sum on columns"""
+type benchmarks_sum_fields {
+  pull_number: Int
+}
+
+"""
+order by sum() on columns of table "benchmarks"
+"""
+input benchmarks_sum_order_by {
+  pull_number: order_by
+}
+
+"""aggregate var_pop on columns"""
+type benchmarks_var_pop_fields {
+  pull_number: Float
+}
+
+"""
+order by var_pop() on columns of table "benchmarks"
+"""
+input benchmarks_var_pop_order_by {
+  pull_number: order_by
+}
+
+"""aggregate var_samp on columns"""
+type benchmarks_var_samp_fields {
+  pull_number: Float
+}
+
+"""
+order by var_samp() on columns of table "benchmarks"
+"""
+input benchmarks_var_samp_order_by {
+  pull_number: order_by
+}
+
+"""aggregate variance on columns"""
+type benchmarks_variance_fields {
+  pull_number: Float
+}
+
+"""
+order by variance() on columns of table "benchmarks"
+"""
+input benchmarks_variance_order_by {
+  pull_number: order_by
+}
+
+"""
+columns and relationships of "benchmarksrun"
+"""
+type benchmarksrun {
+  branch: String
+  commits: String
+  mbs_per_sec: float8
+  name: String
+  ops_per_sec: float8
+  time: float8
+  timestamp: float8
+}
+
+"""
+aggregated selection of "benchmarksrun"
+"""
+type benchmarksrun_aggregate {
+  aggregate: benchmarksrun_aggregate_fields
+  nodes: [benchmarksrun!]!
+}
+
+"""
+aggregate fields of "benchmarksrun"
+"""
+type benchmarksrun_aggregate_fields {
+  avg: benchmarksrun_avg_fields
+  count(columns: [benchmarksrun_select_column!], distinct: Boolean): Int
+  max: benchmarksrun_max_fields
+  min: benchmarksrun_min_fields
+  stddev: benchmarksrun_stddev_fields
+  stddev_pop: benchmarksrun_stddev_pop_fields
+  stddev_samp: benchmarksrun_stddev_samp_fields
+  sum: benchmarksrun_sum_fields
+  var_pop: benchmarksrun_var_pop_fields
+  var_samp: benchmarksrun_var_samp_fields
+  variance: benchmarksrun_variance_fields
+}
+
+"""
+order by aggregate values of table "benchmarksrun"
+"""
+input benchmarksrun_aggregate_order_by {
+  avg: benchmarksrun_avg_order_by
+  count: order_by
+  max: benchmarksrun_max_order_by
+  min: benchmarksrun_min_order_by
+  stddev: benchmarksrun_stddev_order_by
+  stddev_pop: benchmarksrun_stddev_pop_order_by
+  stddev_samp: benchmarksrun_stddev_samp_order_by
+  sum: benchmarksrun_sum_order_by
+  var_pop: benchmarksrun_var_pop_order_by
+  var_samp: benchmarksrun_var_samp_order_by
+  variance: benchmarksrun_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "benchmarksrun"
+"""
+input benchmarksrun_arr_rel_insert_input {
+  data: [benchmarksrun_insert_input!]!
+}
+
+"""aggregate avg on columns"""
+type benchmarksrun_avg_fields {
+  mbs_per_sec: Float
+  ops_per_sec: Float
+  time: Float
+  timestamp: Float
+}
+
+"""
+order by avg() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_avg_order_by {
+  mbs_per_sec: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "benchmarksrun". All fields are combined with a logical 'AND'.
+"""
+input benchmarksrun_bool_exp {
+  _and: [benchmarksrun_bool_exp]
+  _not: benchmarksrun_bool_exp
+  _or: [benchmarksrun_bool_exp]
+  branch: String_comparison_exp
+  commits: String_comparison_exp
+  mbs_per_sec: float8_comparison_exp
+  name: String_comparison_exp
+  ops_per_sec: float8_comparison_exp
+  time: float8_comparison_exp
+  timestamp: float8_comparison_exp
+}
+
+"""
+input type for incrementing integer column in table "benchmarksrun"
+"""
+input benchmarksrun_inc_input {
+  mbs_per_sec: float8
+  ops_per_sec: float8
+  time: float8
+  timestamp: float8
+}
+
+"""
+input type for inserting data into table "benchmarksrun"
+"""
+input benchmarksrun_insert_input {
+  branch: String
+  commits: String
+  mbs_per_sec: float8
+  name: String
+  ops_per_sec: float8
+  time: float8
+  timestamp: float8
+}
+
+"""aggregate max on columns"""
+type benchmarksrun_max_fields {
+  branch: String
+  commits: String
+  mbs_per_sec: float8
+  name: String
+  ops_per_sec: float8
+  time: float8
+  timestamp: float8
+}
+
+"""
+order by max() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_max_order_by {
+  branch: order_by
+  commits: order_by
+  mbs_per_sec: order_by
+  name: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""aggregate min on columns"""
+type benchmarksrun_min_fields {
+  branch: String
+  commits: String
+  mbs_per_sec: float8
+  name: String
+  ops_per_sec: float8
+  time: float8
+  timestamp: float8
+}
+
+"""
+order by min() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_min_order_by {
+  branch: order_by
+  commits: order_by
+  mbs_per_sec: order_by
+  name: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""
+response of any mutation on the table "benchmarksrun"
+"""
+type benchmarksrun_mutation_response {
+  """number of affected rows by the mutation"""
+  affected_rows: Int!
+
+  """data of the affected rows by the mutation"""
+  returning: [benchmarksrun!]!
+}
+
+"""
+input type for inserting object relation for remote table "benchmarksrun"
+"""
+input benchmarksrun_obj_rel_insert_input {
+  data: benchmarksrun_insert_input!
+}
+
+"""
+ordering options when selecting data from "benchmarksrun"
+"""
+input benchmarksrun_order_by {
+  branch: order_by
+  commits: order_by
+  mbs_per_sec: order_by
+  name: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""
+select columns of table "benchmarksrun"
+"""
+enum benchmarksrun_select_column {
+  """column name"""
+  branch
+
+  """column name"""
+  commits
+
+  """column name"""
+  mbs_per_sec
+
+  """column name"""
+  name
+
+  """column name"""
+  ops_per_sec
+
+  """column name"""
+  time
+
+  """column name"""
+  timestamp
+}
+
+"""
+input type for updating data in table "benchmarksrun"
+"""
+input benchmarksrun_set_input {
+  branch: String
+  commits: String
+  mbs_per_sec: float8
+  name: String
+  ops_per_sec: float8
+  time: float8
+  timestamp: float8
+}
+
+"""aggregate stddev on columns"""
+type benchmarksrun_stddev_fields {
+  mbs_per_sec: Float
+  ops_per_sec: Float
+  time: Float
+  timestamp: Float
+}
+
+"""
+order by stddev() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_stddev_order_by {
+  mbs_per_sec: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type benchmarksrun_stddev_pop_fields {
+  mbs_per_sec: Float
+  ops_per_sec: Float
+  time: Float
+  timestamp: Float
+}
+
+"""
+order by stddev_pop() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_stddev_pop_order_by {
+  mbs_per_sec: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type benchmarksrun_stddev_samp_fields {
+  mbs_per_sec: Float
+  ops_per_sec: Float
+  time: Float
+  timestamp: Float
+}
+
+"""
+order by stddev_samp() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_stddev_samp_order_by {
+  mbs_per_sec: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""aggregate sum on columns"""
+type benchmarksrun_sum_fields {
+  mbs_per_sec: float8
+  ops_per_sec: float8
+  time: float8
+  timestamp: float8
+}
+
+"""
+order by sum() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_sum_order_by {
+  mbs_per_sec: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""aggregate var_pop on columns"""
+type benchmarksrun_var_pop_fields {
+  mbs_per_sec: Float
+  ops_per_sec: Float
+  time: Float
+  timestamp: Float
+}
+
+"""
+order by var_pop() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_var_pop_order_by {
+  mbs_per_sec: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""aggregate var_samp on columns"""
+type benchmarksrun_var_samp_fields {
+  mbs_per_sec: Float
+  ops_per_sec: Float
+  time: Float
+  timestamp: Float
+}
+
+"""
+order by var_samp() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_var_samp_order_by {
+  mbs_per_sec: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+"""aggregate variance on columns"""
+type benchmarksrun_variance_fields {
+  mbs_per_sec: Float
+  ops_per_sec: Float
+  time: Float
+  timestamp: Float
+}
+
+"""
+order by variance() on columns of table "benchmarksrun"
+"""
+input benchmarksrun_variance_order_by {
+  mbs_per_sec: order_by
+  ops_per_sec: order_by
+  time: order_by
+  timestamp: order_by
+}
+
+scalar float8
+
+"""
+expression to compare columns of type float8. All fields are combined with logical 'AND'.
+"""
+input float8_comparison_exp {
+  _eq: float8
+  _gt: float8
+  _gte: float8
+  _in: [float8!]
+  _is_null: Boolean
+  _lt: float8
+  _lte: float8
+  _neq: float8
+  _nin: [float8!]
+}
+
+"""
+expression to compare columns of type Int. All fields are combined with logical 'AND'.
+"""
+input Int_comparison_exp {
+  _eq: Int
+  _gt: Int
+  _gte: Int
+  _in: [Int!]
+  _is_null: Boolean
+  _lt: Int
+  _lte: Int
+  _neq: Int
+  _nin: [Int!]
+}
+
+scalar jsonb
+
+"""
+expression to compare columns of type jsonb. All fields are combined with logical 'AND'.
+"""
+input jsonb_comparison_exp {
+  """is the column contained in the given json value"""
+  _contained_in: jsonb
+
+  """does the column contain the given json value at the top level"""
+  _contains: jsonb
+  _eq: jsonb
+  _gt: jsonb
+  _gte: jsonb
+
+  """does the string exist as a top-level key in the column"""
+  _has_key: String
+
+  """do all of these strings exist as top-level keys in the column"""
+  _has_keys_all: [String!]
+
+  """do any of these strings exist as top-level keys in the column"""
+  _has_keys_any: [String!]
+  _in: [jsonb!]
+  _is_null: Boolean
+  _lt: jsonb
+  _lte: jsonb
+  _neq: jsonb
+  _nin: [jsonb!]
+}
+
+"""mutation root"""
+type mutation_root {
+  """
+  delete data from the table: "benchmarks"
+  """
+  delete_benchmarks(
+    """filter the rows which have to be deleted"""
+    where: benchmarks_bool_exp!
+  ): benchmarks_mutation_response
+
+  """
+  delete data from the table: "benchmarksrun"
+  """
+  delete_benchmarksrun(
+    """filter the rows which have to be deleted"""
+    where: benchmarksrun_bool_exp!
+  ): benchmarksrun_mutation_response
+
+  """
+  insert data into the table: "benchmarks"
+  """
+  insert_benchmarks(
+    """the rows to be inserted"""
+    objects: [benchmarks_insert_input!]!
+  ): benchmarks_mutation_response
+
+  """
+  insert a single row into the table: "benchmarks"
+  """
+  insert_benchmarks_one(
+    """the row to be inserted"""
+    object: benchmarks_insert_input!
+  ): benchmarks
+
+  """
+  insert data into the table: "benchmarksrun"
+  """
+  insert_benchmarksrun(
+    """the rows to be inserted"""
+    objects: [benchmarksrun_insert_input!]!
+  ): benchmarksrun_mutation_response
+
+  """
+  insert a single row into the table: "benchmarksrun"
+  """
+  insert_benchmarksrun_one(
+    """the row to be inserted"""
+    object: benchmarksrun_insert_input!
+  ): benchmarksrun
+
+  """
+  update data of the table: "benchmarks"
+  """
+  update_benchmarks(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: benchmarks_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: benchmarks_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from
+    the end). throws an error if top level container is not an array
+    """
+    _delete_elem: benchmarks_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: benchmarks_delete_key_input
+
+    """increments the integer columns with given value of the filtered values"""
+    _inc: benchmarks_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: benchmarks_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: benchmarks_set_input
+
+    """filter the rows which have to be updated"""
+    where: benchmarks_bool_exp!
+  ): benchmarks_mutation_response
+
+  """
+  update data of the table: "benchmarksrun"
+  """
+  update_benchmarksrun(
+    """increments the integer columns with given value of the filtered values"""
+    _inc: benchmarksrun_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: benchmarksrun_set_input
+
+    """filter the rows which have to be updated"""
+    where: benchmarksrun_bool_exp!
+  ): benchmarksrun_mutation_response
+}
+
+"""column ordering options"""
+enum order_by {
+  """in the ascending order, nulls last"""
+  asc
+
+  """in the ascending order, nulls first"""
+  asc_nulls_first
+
+  """in the ascending order, nulls last"""
+  asc_nulls_last
+
+  """in the descending order, nulls first"""
+  desc
+
+  """in the descending order, nulls first"""
+  desc_nulls_first
+
+  """in the descending order, nulls last"""
+  desc_nulls_last
+}
+
+"""query root"""
+type query_root {
+  """
+  fetch data from the table: "benchmarks"
+  """
+  benchmarks(
+    """distinct select on columns"""
+    distinct_on: [benchmarks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [benchmarks_order_by!]
+
+    """filter the rows returned"""
+    where: benchmarks_bool_exp
+  ): [benchmarks!]!
+
+  """
+  fetch aggregated fields from the table: "benchmarks"
+  """
+  benchmarks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [benchmarks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [benchmarks_order_by!]
+
+    """filter the rows returned"""
+    where: benchmarks_bool_exp
+  ): benchmarks_aggregate!
+
+  """
+  fetch data from the table: "benchmarksrun"
+  """
+  benchmarksrun(
+    """distinct select on columns"""
+    distinct_on: [benchmarksrun_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [benchmarksrun_order_by!]
+
+    """filter the rows returned"""
+    where: benchmarksrun_bool_exp
+  ): [benchmarksrun!]!
+
+  """
+  fetch aggregated fields from the table: "benchmarksrun"
+  """
+  benchmarksrun_aggregate(
+    """distinct select on columns"""
+    distinct_on: [benchmarksrun_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [benchmarksrun_order_by!]
+
+    """filter the rows returned"""
+    where: benchmarksrun_bool_exp
+  ): benchmarksrun_aggregate!
+}
+
+"""
+expression to compare columns of type String. All fields are combined with logical 'AND'.
+"""
+input String_comparison_exp {
+  _eq: String
+  _gt: String
+  _gte: String
+  _ilike: String
+  _in: [String!]
+  _is_null: Boolean
+  _like: String
+  _lt: String
+  _lte: String
+  _neq: String
+  _nilike: String
+  _nin: [String!]
+  _nlike: String
+  _nsimilar: String
+  _similar: String
+}
+
+"""subscription root"""
+type subscription_root {
+  """
+  fetch data from the table: "benchmarks"
+  """
+  benchmarks(
+    """distinct select on columns"""
+    distinct_on: [benchmarks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [benchmarks_order_by!]
+
+    """filter the rows returned"""
+    where: benchmarks_bool_exp
+  ): [benchmarks!]!
+
+  """
+  fetch aggregated fields from the table: "benchmarks"
+  """
+  benchmarks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [benchmarks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [benchmarks_order_by!]
+
+    """filter the rows returned"""
+    where: benchmarks_bool_exp
+  ): benchmarks_aggregate!
+
+  """
+  fetch data from the table: "benchmarksrun"
+  """
+  benchmarksrun(
+    """distinct select on columns"""
+    distinct_on: [benchmarksrun_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [benchmarksrun_order_by!]
+
+    """filter the rows returned"""
+    where: benchmarksrun_bool_exp
+  ): [benchmarksrun!]!
+
+  """
+  fetch aggregated fields from the table: "benchmarksrun"
+  """
+  benchmarksrun_aggregate(
+    """distinct select on columns"""
+    distinct_on: [benchmarksrun_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [benchmarksrun_order_by!]
+
+    """filter the rows returned"""
+    where: benchmarksrun_bool_exp
+  ): benchmarksrun_aggregate!
+}
+
+scalar timestamp
+
+"""
+expression to compare columns of type timestamp. All fields are combined with logical 'AND'.
+"""
+input timestamp_comparison_exp {
+  _eq: timestamp
+  _gt: timestamp
+  _gte: timestamp
+  _in: [timestamp!]
+  _is_null: Boolean
+  _lt: timestamp
+  _lte: timestamp
+  _neq: timestamp
+  _nin: [timestamp!]
+}
+
