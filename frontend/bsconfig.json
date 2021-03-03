@@ -6,7 +6,8 @@
   "bsc-flags": ["-bs-super-errors"],
   "sources": [
     {
-      "dir": "src"
+      "dir": "src",
+      "subdirs": true
     }
   ],
   "package-specs": [
@@ -25,6 +26,7 @@
     "reason-urql",
     "wonka",
     "bs-fetch",
+    "reason-promise",
     "reason-relay",
     "@glennsl/bs-json"
   ],

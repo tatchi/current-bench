@@ -49,4 +49,13 @@ module Array = {
   let contains = (arr, target) => {
     Belt.Array.getBy(arr, x => x == target)->Belt.Option.isSome
   }
+
+  let deoptionalize = arr => {
+    arr->Belt.Array.reduce([], (acc, value) =>
+      switch value {
+      | None => acc
+      | Some(v) => Belt.Array.concat(acc, [v])
+      }
+    )
+  }
 }

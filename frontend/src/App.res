@@ -281,12 +281,18 @@ module RepoView = {
 }
 @react.component
 let make = () => {
-  let route = AppRouter.useRoute()
+  <div className={Sx.make([Sx.container, Sx.d.flex])}>
+    <React.Suspense fallback={<div> {"Sidebar loading..."->Rx.string} </div>}>
+      <Sidebar2 />
+    </React.Suspense>
+  </div>
 
-  switch route {
-  | Error({reason}) => <ErrorView msg={reason} />
-  | Ok(Main) => <RepoView />
-  | Ok(Repo({repoId})) => <RepoView repoId />
-  | Ok(RepoPull({repoId, pullNumber})) => <RepoView repoId pullNumber />
-  }
+  // let route = AppRouter.useRoute()
+
+  // switch route {
+  // | Error({reason}) => <ErrorView msg={reason} />
+  // | Ok(Main) => <RepoView />
+  // | Ok(Repo({repoId})) => <RepoView repoId />
+  // | Ok(RepoPull({repoId, pullNumber})) => <RepoView repoId pullNumber />
+  // }
 }
