@@ -12,17 +12,26 @@ let pullToString = ((pullNumber, branch)) =>
   }
 
 module PullsMenu = {
-  module Sidebar2PullsMenuFragment = %relay(`
-fragment Sidebar2_PullsMenu_query on query_root @argumentDefinitions(repoId: {type: "String!"}) {
-  benchmarks(distinct_on: [pull_number], where: {_and: [{repo_id: {_eq: $repoId}}, {pull_number: {_is_null: false}}]}, order_by: [{pull_number: desc}]) {
+  module Sidebar2PullsMenuQuery = %relay(`
+query Sidebar2_PullsMenu_Query($repoId: String!) {
+  benchmarks(
+    distinct_on: [pull_number]
+    where: {
+      _and: [
+        { repo_id: { _eq: $repoId } }
+        { pull_number: { _is_null: false } }
+      ]
+    }
+    order_by: [{ pull_number: desc }]
+  ) {
     pull_number
     branch
-  }  
+  }
 }
 `)
   @react.component
-  let make = (~pulls, ~repoId, ~selectedPull=?) => {
-    let {benchmarks} = Sidebar2PullsMenuFragment.use(pulls)
+  let make = (~queryRef, ~repoId, ~selectedPull=?) => {
+    let {benchmarks} = Sidebar2PullsMenuQuery.usePreloaded(~queryRef, ())
 
     let pulls =
       benchmarks
@@ -48,21 +57,21 @@ fragment Sidebar2_PullsMenu_query on query_root @argumentDefinitions(repoId: {ty
 module SelectRepo = {
   module SelectRepoFragment = %relay(`
   fragment Sidebar2_SelectRepo_query on query_root {
-    benchmarks(distinct_on: [repo_id]) {
+    repoIds: benchmarks(distinct_on: [repo_id]) {
       repo_id
     }
   }
 `)
   @react.component
   let make = (~repoIds, ~selectedRepoId=?, ~onSelectRepoId) => {
-    let {benchmarks} = SelectRepoFragment.use(repoIds)
+    let {repoIds} = SelectRepoFragment.use(repoIds)
 
     <Select
       name="repositories"
       value=?selectedRepoId
       placeholder="Select a repository"
       onChange={e => ReactEvent.Form.target(e)["value"]->onSelectRepoId}>
-      {benchmarks
+      {repoIds
       ->Belt.Array.mapWithIndex((i, {repo_id: repoId}) =>
         <option key={string_of_int(i)} value={repoId}> {Rx.string(repoId)} </option>
       )
@@ -74,19 +83,18 @@ module SelectRepo = {
 module Query = %relay(`
   query Sidebar2Query {
     ...Sidebar2_SelectRepo_query
-    ...Sidebar2_PullsMenu_query
   }
 `)
 @react.component
-let make = () => {
+let make = (~queryRef) => {
   let queryData = Query.use(~variables=(), ())
-
   let url = ReasonReactRouter.useUrl()
-
   let selectedRepoId = switch url.path {
   | list{orgName, repoName, ..._rest} => Some(`${orgName}/${repoName}`)
   | _ => None
   }
+
+  Js.log("render sidebar")
 
   <Column
     spacing=Sx.xl
@@ -127,9 +135,9 @@ let make = () => {
       <Text color=Sx.gray700 weight=#bold uppercase=true size=#sm>
         {Rx.text("Pull Requests")}
       </Text>
-      {switch selectedRepoId {
-      | Some(repoId) => <PullsMenu repoId pulls={queryData.fragmentRefs} />
-      | None => Rx.text("None")
+      {switch (selectedRepoId, queryRef) {
+      | (Some(repoId), Some(queryRef)) => <PullsMenu repoId queryRef />
+      | _ => Rx.text("None")
       }}
     </Column>
   </Column>

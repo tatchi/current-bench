@@ -6,9 +6,9 @@
 
 module Types = {
   [@ocaml.warning "-30"];
-  type fragment_benchmarks = {repo_id: string};
+  type fragment_repoIds = {repo_id: string};
 
-  type fragment = {benchmarks: array(fragment_benchmarks)};
+  type fragment = {repoIds: array(fragment_repoIds)};
 };
 
 module Internal = {
@@ -46,7 +46,7 @@ let node: operationType = [%raw {json| {
   "name": "Sidebar2_SelectRepo_query",
   "selections": [
     {
-      "alias": null,
+      "alias": "repoIds",
       "args": [
         {
           "kind": "Literal",

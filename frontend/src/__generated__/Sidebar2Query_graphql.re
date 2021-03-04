@@ -90,7 +90,7 @@ let node: operationType = [%raw {json| {
     "name": "Sidebar2Query",
     "selections": [
       {
-        "alias": null,
+        "alias": "repoIds",
         "args": [
           {
             "kind": "Literal",
@@ -118,12 +118,12 @@ let node: operationType = [%raw {json| {
     ]
   },
   "params": {
-    "cacheID": "41df8954b60133ea4f9c85dfb1f259f5",
+    "cacheID": "307b0f452dd2d35bfa71cb2b107abc25",
     "id": null,
     "metadata": {},
     "name": "Sidebar2Query",
     "operationKind": "query",
-    "text": "query Sidebar2Query {\n  ...Sidebar2_SelectRepo_query\n}\n\nfragment Sidebar2_SelectRepo_query on query_root {\n  benchmarks(distinct_on: [repo_id]) {\n    repo_id\n  }\n}\n"
+    "text": "query Sidebar2Query {\n  ...Sidebar2_SelectRepo_query\n}\n\nfragment Sidebar2_SelectRepo_query on query_root {\n  repoIds: benchmarks(distinct_on: [repo_id]) {\n    repo_id\n  }\n}\n"
   }
 } |json}];
 

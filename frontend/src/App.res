@@ -281,9 +281,33 @@ module RepoView = {
 }
 @react.component
 let make = () => {
+  let (queryRef, loadQuery, _disposeQuery) = Sidebar2.PullsMenu.Sidebar2PullsMenuQuery.useLoader()
+  // let (ownQueryRef, loadQueryRepos, _disposeQuery) = Sidebar2.Query.useLoader()
+  let url = ReasonReactRouter.useUrl()
+  let selectedRepoId = switch url.path {
+  | list{orgName, repoName, ..._rest} => Some(`${orgName}/${repoName}`)
+  | _ => None
+  }
+
+  // React.useEffect1(() => {
+  //   loadQueryRepos(~variables=(), ())
+  //   None
+  // }, [])
+
+  React.useEffect1(() => {
+    switch selectedRepoId {
+    | Some(repoId) => {
+        Js.log("load query")
+        loadQuery(~variables={repoId: repoId}, ())
+      }
+    | None => ()
+    }
+    None
+  }, [selectedRepoId])
+
   <div className={Sx.make([Sx.container, Sx.d.flex])}>
     <React.Suspense fallback={<div> {"Sidebar loading..."->Rx.string} </div>}>
-      <Sidebar2 />
+      <Sidebar2 queryRef />
     </React.Suspense>
   </div>
 
