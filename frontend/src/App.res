@@ -51,19 +51,6 @@ let makeGetBenchmarksVariables = (
   }
 }
 
-let getTestMetrics = (item: BenchmarkMetrics.t): BenchmarkTest.testMetrics => {
-  {
-    BenchmarkTest.name: item.test_name,
-    metrics: item.metrics
-    ->Belt.Option.getExn
-    ->Js.Json.decodeObject
-    ->Belt.Option.getExn
-    ->jsDictToMap
-    ->Belt.Map.String.map(v => BenchmarkTest.decodeMetricValue(v)),
-    commit: item.commit,
-  }
-}
-
 module Benchmark = {
   let decodeRunAt = runAt => runAt->Js.Json.decodeString->Belt.Option.map(Js.Date.fromString)
 
@@ -279,14 +266,193 @@ module RepoView = {
     }
   }
 }
+
+module BenchmarkMetricsFragment = %relay(`
+fragment App_BenchmarkMetrics_Fragment on benchmarks @inline {
+  run_at
+  commit
+  test_name
+  metrics
+}
+`)
+
+module Benchmark2 = {
+  let decodeRunAt = runAt => runAt->Js.Json.decodeString->Belt.Option.map(Js.Date.fromString)
+
+  let decodeMetrics = metrics =>
+    metrics
+    ->Belt.Option.getExn
+    ->Js.Json.decodeObject
+    ->Belt.Option.getExn
+    ->jsDictToMap
+    ->Belt.Map.String.map(v => BenchmarkTest.decodeMetricValue(v))
+
+  let makeBenchmarkData = (
+    benchmarks: array<ReasonRelay.fragmentRefs<[#App_BenchmarkMetrics_Fragment]>>,
+  ) => {
+    benchmarks
+    ->Belt.Array.map(BenchmarkMetricsFragment.readInline)
+    ->Belt.Array.reduce(BenchmarkData.empty, (acc, item) => {
+      item.metrics
+      ->decodeMetrics
+      ->Belt.Map.String.reduce(acc, (acc, metricName, value) => {
+        BenchmarkData.add(
+          acc,
+          ~testName=item.test_name,
+          ~metricName,
+          ~runAt=item.run_at->decodeRunAt->Belt.Option.getExn,
+          ~commit=item.commit,
+          ~value,
+        )
+      })
+    })
+  }
+  @react.component
+  let make = (~repoId, ~pullNumber, ~data: App_BenchmarkView_Query_graphql.Types.response) => {
+    let benchmarkDataByTestName = React.useMemo2(() => {
+      data.benchmarks->Belt.Array.map(b => b.fragmentRefs)->makeBenchmarkData
+    }, (data.benchmarks, makeBenchmarkData))
+    let comparisonBenchmarkDataByTestName = React.useMemo2(
+      () =>
+        data.comparisonBenchmarks
+        ->Belt.Array.map(b => b.fragmentRefs)
+        ->Belt.Array.reverse
+        ->makeBenchmarkData,
+      (data.comparisonBenchmarks, makeBenchmarkData),
+    )
+
+    let graphsData = React.useMemo1(() => {
+      benchmarkDataByTestName
+      ->Belt.Map.String.mapWithKey((testName, dataByMetricName) => {
+        let comparison = Belt.Map.String.getWithDefault(
+          comparisonBenchmarkDataByTestName,
+          testName,
+          Belt.Map.String.empty,
+        )
+        (dataByMetricName, comparison, testName)
+      })
+      ->Belt.Map.String.valuesToArray
+    }, [benchmarkDataByTestName])
+
+    <Column spacing=Sx.xl3>
+      {graphsData
+      ->Belt.Array.map(((dataByMetricName, comparison, testName)) =>
+        <BenchmarkTest repoId pullNumber=Some(pullNumber) key={testName} testName dataByMetricName comparison />
+      )
+      ->Rx.array(~empty=<Message text="No data for selected interval." />)}
+    </Column>
+  }
+}
+
+module BenchmarkViewQuery = %relay(`
+query App_BenchmarkView_Query($repoId: String!, $pullNumber: Int!) {
+  benchmarks: benchmarks(
+    where: {
+      _and: [
+        { pull_number: { _eq: $pullNumber } }
+        { repo_id: { _eq: $repoId } }
+      ]
+    }
+  ) {
+    ...App_BenchmarkMetrics_Fragment
+  }
+
+  comparisonBenchmarks: benchmarks(
+    where: {
+      _and: [{ pull_number: { _is_null: true } }, { repo_id: { _eq: $repoId } }]
+    }
+    limit: 50
+    order_by: [{ run_at: desc }]
+  ) {
+    ...App_BenchmarkMetrics_Fragment
+  }
+}
+`)
+module BenchmarkView2 = {
+  @react.component
+  let make = (~selectedRepoId, ~selectedPullNumber) => {
+    let queryData = BenchmarkViewQuery.use(
+      ~variables={
+        repoId: selectedRepoId,
+        pullNumber: selectedPullNumber,
+      },
+      (),
+    )
+
+    <Benchmark2 repoId=selectedRepoId pullNumber=selectedPullNumber data=queryData />
+  }
+}
+
+module MainContent = {
+  @react.component
+  let make = (~selectedRepoId=?, ~selectedPullNumber=?) => {
+    let ((startDate, endDate), setDateRange) = React.useState(getDefaultDateRange)
+    let onSelectDateRange = (startDate, endDate) => setDateRange(_ => (startDate, endDate))
+    let topBar = switch selectedRepoId {
+    | None => <>
+        <Topbar>
+          <Litepicker
+            startDate=?None endDate=?None sx=[Sx.w.xl5, Sx.ml.auto] onSelect={onSelectDateRange}
+          />
+        </Topbar>
+      </>
+    | Some(repoId) => {
+        let breadcrumbs =
+          <Row sx=[Sx.w.auto, Sx.text.noUnderline] alignY=#center>
+            <Text weight=#semibold> {Rx.text("/")} </Text>
+            {
+              let href = AppRouter.Repo({repoId: repoId})->AppRouter.path
+              <Link href text="master" />
+            }
+            {selectedPullNumber->Rx.onSome(pullNumber => {
+              let href =
+                AppRouter.RepoPull({repoId: repoId, pullNumber: pullNumber})->AppRouter.path
+              <>
+                <Text weight=#semibold> {Rx.text("/")} </Text>
+                <Link href icon=Icon.branch text={string_of_int(pullNumber)} />
+              </>
+            })}
+          </Row>
+        let githubLink =
+          <Link href={"https://github.com/" ++ repoId} sx=[Sx.ml.auto, Sx.mr.xl] icon=Icon.github />
+        <Topbar>
+          {breadcrumbs}
+          {githubLink}
+          <Litepicker startDate endDate sx=[Sx.w.xl5] onSelect={onSelectDateRange} />
+        </Topbar>
+      }
+    }
+
+    <Column sx=[Sx.w.full, Sx.minW.zero]>
+      {topBar}
+      <Block sx=[Sx.px.xl2, Sx.py.xl2, Sx.w.full, Sx.minW.zero]>
+        {switch (selectedRepoId, selectedPullNumber) {
+        | (Some(selectedRepoId), Some(selectedPullNumber)) =>
+          <React.Suspense fallback={<div> {"Loading data..."->Rx.string} </div>}>
+            <BenchmarkView2 selectedRepoId selectedPullNumber />
+          </React.Suspense>
+        | _ => <Welcome />
+        }}
+      </Block>
+    </Column>
+  }
+}
+
 @react.component
 let make = () => {
-  let (queryRef, loadQuery, _disposeQuery) = Sidebar2.PullsMenu.Sidebar2PullsMenuQuery.useLoader()
+  // let (queryRef, loadQuery, _disposeQuery) = Sidebar2.PullsMenu.Sidebar2PullsMenuQuery.useLoader()
   // let (ownQueryRef, loadQueryRepos, _disposeQuery) = Sidebar2.Query.useLoader()
   let url = ReasonReactRouter.useUrl()
-  let selectedRepoId = switch url.path {
-  | list{orgName, repoName, ..._rest} => Some(`${orgName}/${repoName}`)
-  | _ => None
+  let (selectedRepoId, selectedPullNumber) = switch url.path {
+  | list{orgName, repoName, ...rest} => {
+      let selectedRepoId = Some(`${orgName}/${repoName}`)
+      let selectedPullNumber = switch rest {
+      | list{"pull", pullNumber, ..._rest} => Belt.Int.fromString(pullNumber)
+      | _ => None
+      }
+      (selectedRepoId, selectedPullNumber)
+    }
+  | _ => (None, None)
   }
 
   // React.useEffect1(() => {
@@ -294,21 +460,28 @@ let make = () => {
   //   None
   // }, [])
 
-  React.useEffect1(() => {
-    switch selectedRepoId {
-    | Some(repoId) => {
-        Js.log("load query")
-        loadQuery(~variables={repoId: repoId}, ())
-      }
-    | None => ()
-    }
-    None
-  }, [selectedRepoId])
+  // React.useEffect1(() => {
+  //   switch selectedRepoId {
+  //   | Some(repoId) => {
+  //       Js.log("load query")
+  //       loadQuery(~variables={repoId: repoId}, ())
+  //     }
+  //   | None => ()
+  //   }
+  //   None
+  // }, [selectedRepoId])
 
   <div className={Sx.make([Sx.container, Sx.d.flex])}>
-    <React.Suspense fallback={<div> {"Sidebar loading..."->Rx.string} </div>}>
-      <Sidebar2 queryRef />
-    </React.Suspense>
+    <Sidebar2 ?selectedRepoId />
+    <Column sx=[Sx.w.full, Sx.minW.zero]>
+      <MainContent ?selectedRepoId ?selectedPullNumber />
+      // <Topbar>
+      //   <Litepicker
+      //     startDate=?None endDate=?None sx=[Sx.w.xl5, Sx.ml.auto] onSelect={(_, _) => ()}
+      //   />
+      // </Topbar>
+      // <Welcome />
+    </Column>
   </div>
 
   // let route = AppRouter.useRoute()

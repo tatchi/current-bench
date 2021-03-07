@@ -30,9 +30,8 @@ query Sidebar2_PullsMenu_Query($repoId: String!) {
 }
 `)
   @react.component
-  let make = (~queryRef, ~repoId, ~selectedPull=?) => {
-    let {benchmarks} = Sidebar2PullsMenuQuery.usePreloaded(~queryRef, ())
-
+  let make = (~repoId, ~selectedPull=?) => {
+    let {benchmarks} = Sidebar2PullsMenuQuery.use(~variables={repoId: repoId}, ())
     let pulls =
       benchmarks
       ->Belt.Array.map(benchmark => benchmark.pull_number)
@@ -55,16 +54,16 @@ query Sidebar2_PullsMenu_Query($repoId: String!) {
 }
 
 module SelectRepo = {
-  module SelectRepoFragment = %relay(`
-  fragment Sidebar2_SelectRepo_query on query_root {
+  module SelectRepoQuery = %relay(`
+  query Sidebar2_SelectRepo_Query {
     repoIds: benchmarks(distinct_on: [repo_id]) {
       repo_id
     }
   }
 `)
   @react.component
-  let make = (~repoIds, ~selectedRepoId=?, ~onSelectRepoId) => {
-    let {repoIds} = SelectRepoFragment.use(repoIds)
+  let make = (~selectedRepoId=?, ~onSelectRepoId) => {
+    let {repoIds} = SelectRepoQuery.use(~variables=(), ())
 
     <Select
       name="repositories"
@@ -80,22 +79,8 @@ module SelectRepo = {
   }
 }
 
-module Query = %relay(`
-  query Sidebar2Query {
-    ...Sidebar2_SelectRepo_query
-  }
-`)
 @react.component
-let make = (~queryRef) => {
-  let queryData = Query.use(~variables=(), ())
-  let url = ReasonReactRouter.useUrl()
-  let selectedRepoId = switch url.path {
-  | list{orgName, repoName, ..._rest} => Some(`${orgName}/${repoName}`)
-  | _ => None
-  }
-
-  Js.log("render sidebar")
-
+let make = (~selectedRepoId=?) => {
   <Column
     spacing=Sx.xl
     sx=[
@@ -123,11 +108,9 @@ let make = (~queryRef) => {
       <Text sx=[Sx.mb.md] color=Sx.gray700 weight=#bold uppercase=true size=#sm>
         {Rx.text("Repositories")}
       </Text>
-      <React.Suspense fallback={<div> {"Loading..."->Rx.string} </div>}>
+      <React.Suspense fallback={<div> {"Select loading..."->Rx.string} </div>}>
         <SelectRepo
-          repoIds=queryData.fragmentRefs
-          ?selectedRepoId
-          onSelectRepoId={repoId => AppRouter.Repo({repoId: repoId})->AppRouter.go}
+          ?selectedRepoId onSelectRepoId={repoId => AppRouter.Repo({repoId: repoId})->AppRouter.go}
         />
       </React.Suspense>
     </Column>
@@ -135,8 +118,11 @@ let make = (~queryRef) => {
       <Text color=Sx.gray700 weight=#bold uppercase=true size=#sm>
         {Rx.text("Pull Requests")}
       </Text>
-      {switch (selectedRepoId, queryRef) {
-      | (Some(repoId), Some(queryRef)) => <PullsMenu repoId queryRef />
+      {switch selectedRepoId {
+      | Some(repoId) =>
+        <React.Suspense fallback={<div> {"pulls loading..."->Rx.string} </div>}>
+          <PullsMenu repoId />
+        </React.Suspense>
       | _ => Rx.text("None")
       }}
     </Column>

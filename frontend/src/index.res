@@ -11,9 +11,16 @@ let client = ReasonUrql.Client.make(
   (),
 )
 
+// ReactDOMRe.renderToElementWithId(
+//   <ReasonRelay.Context.Provider environment=RelayEnv.environment>
+//     <ReasonUrql.Context.Provider value=client> <App /> </ReasonUrql.Context.Provider>
+//   </ReasonRelay.Context.Provider>,
+//   "root",
+// )
+
 ReactExperimental.renderConcurrentRootAtElementWithId(
   <ReasonRelay.Context.Provider environment=RelayEnv.environment>
-    <ReasonUrql.Context.Provider value=client> <App /> </ReasonUrql.Context.Provider>
+    <App />
   </ReasonRelay.Context.Provider>,
   "root",
 )
