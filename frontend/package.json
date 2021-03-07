@@ -7,7 +7,8 @@
     "build": "bsb -make-world",
     "clean": "bsb -clean-world",
     "relay": "reason-relay-compiler",
-    "relay:watch": "reason-relay-compiler --watch"
+    "relay:watch": "reason-relay-compiler --watch",
+    "build-all": "yarn relay && yarn build && yarn bundle"
   },
   "devDependencies": {
     "@reasonml-community/graphql-ppx": "^1.0.2",
