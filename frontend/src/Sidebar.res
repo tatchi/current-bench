@@ -1,13 +1,13 @@
 open! Prelude
 open Components
 
-let linkForPull = (repoId, benchmarkName, (pullNumber, _)) => {
-  AppRouter.RepoPull({
-    repoId: repoId,
-    benchmarkName: benchmarkName,
-    pullNumber: pullNumber,
-  })->AppRouter.path
-}
+// let linkForPull = (repoId, benchmarkName, (pullNumber, _)) => {
+//   AppRouter.RepoPull({
+//     repoId: repoId,
+//     benchmarkName: benchmarkName,
+//     pullNumber: pullNumber,
+//   })->AppRouter.path
+// }
 
 let pullToString = ((pullNumber, branch)) =>
   switch branch {
@@ -26,7 +26,7 @@ query ($repoId: String!, $benchmarkName: String, $isDefaultBenchmark: Boolean!) 
 
 module GetRepoBenchmarkNames = %graphql(`
 query ($repoId: String!) {
-  benchmarkNames: benchmarks(distinct_on: [benchmark_name], where: {repo_id: {_eq: $repoId}}, order_by: [{benchmark_name: asc_nulls_first}]) {
+  benchmarkNames: benchmarks(distinct_on: [benchmark_name], where: {repo_id: {_eq: $repoId}, benchmark_name: {_is_null: false}}, order_by: [{benchmark_name: asc_nulls_first}]) {
     benchmark_name
   }
 }
@@ -64,13 +64,28 @@ module PullsMenu = {
       pulls
       ->Belt.Array.mapWithIndex((i, pull) => {
         let (pullNumber, _) = pull
+
+        let route = switch benchmarkName {
+        | Some(benchmarkName) =>
+          AppRouter.RepoBenchmarkWithPull({
+            repoId: repoId,
+            benchmarkName: benchmarkName,
+            pullNumber: pullNumber,
+          })
+        | None =>
+          AppRouter.RepoPull({
+            repoId: repoId,
+            pullNumber: pullNumber,
+          })
+        }
+
         <Link
           sx=[Sx.pb.md]
           active={selectedPull->Belt.Option.mapWithDefault(false, selectedPullNumber =>
             selectedPullNumber == pullNumber
           )}
           key={string_of_int(i)}
-          href={linkForPull(repoId, benchmarkName, pull)}
+          href={route->AppRouter.path}
           text={pullToString(pull)}
         />
       })
@@ -90,8 +105,6 @@ module BenchmarksMenu = {
       )
     }
 
-    Js.log(selectedBenchmarkName)
-
     switch response {
     | Empty => <div> {"Something went wrong!"->Rx.text} </div>
     | Error({networkError: Some(_)}) => <div> {"Network Error"->Rx.text} </div>
@@ -99,19 +112,22 @@ module BenchmarksMenu = {
     | Fetching => Rx.text("Loading...")
     | Data(data)
     | PartialData(data, _) =>
-      let benchmarkNames = data.benchmarkNames->Belt.Array.map(obj => obj.benchmark_name)
+      let benchmarkNames =
+        data.benchmarkNames->Belt.Array.map(obj => obj.benchmark_name)->Belt.Array.keepMap(identity)
 
       benchmarkNames
       ->Belt.Array.mapWithIndex((i, benchmarkName) => {
         <Link
           sx=[Sx.pb.md]
-          active={selectedBenchmarkName == benchmarkName}
+          active={selectedBenchmarkName->Belt.Option.mapWithDefault(false, selectedBenchmarkName =>
+            selectedBenchmarkName == benchmarkName
+          )}
           key={string_of_int(i)}
           href={AppRouter.RepoBenchmark({
             repoId: repoId,
             benchmarkName: benchmarkName,
           })->AppRouter.path}
-          text={benchmarkName->Belt.Option.getWithDefault("default")}
+          text={benchmarkName}
         />
       })
       ->Rx.array

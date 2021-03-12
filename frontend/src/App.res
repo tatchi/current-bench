@@ -253,9 +253,17 @@ module RepoView = {
                 <Link href text="master" />
               }
               {pullNumber->Rx.onSome(pullNumber => {
-                let href = "placeholder"
-                // let href =
-                //   AppRouter.RepoPull({repoId: repoId, pullNumber: pullNumber})->AppRouter.path
+                let href = switch benchmarkName {
+                | Some(benchmarkName) =>
+                  AppRouter.RepoBenchmarkWithPull({
+                    repoId: repoId,
+                    benchmarkName: benchmarkName,
+                    pullNumber: pullNumber,
+                  })->AppRouter.path
+                | None =>
+                  AppRouter.RepoPull({repoId: repoId, pullNumber: pullNumber})->AppRouter.path
+                }
+
                 <>
                   <Text weight=#semibold> {Rx.text("/")} </Text>
                   <Link href icon=Icon.branch text={string_of_int(pullNumber)} />
@@ -293,8 +301,9 @@ let make = () => {
   | Error({reason}) => <ErrorView msg={reason} />
   | Ok(Main) => <RepoView />
   | Ok(Repo({repoId})) => <RepoView repoId />
-  | Ok(RepoBenchmark({repoId, benchmarkName})) => <RepoView repoId ?benchmarkName />
-  | Ok(RepoPull({repoId, pullNumber, benchmarkName})) =>
-    <RepoView repoId pullNumber ?benchmarkName />
+  | Ok(RepoBenchmark({repoId, benchmarkName})) => <RepoView repoId benchmarkName />
+  | Ok(RepoPull({repoId, pullNumber})) => <RepoView repoId pullNumber />
+  | Ok(RepoBenchmarkWithPull({repoId, pullNumber, benchmarkName})) =>
+    <RepoView repoId pullNumber benchmarkName />
   }
 }
