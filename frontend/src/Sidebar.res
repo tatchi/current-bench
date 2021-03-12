@@ -16,8 +16,8 @@ let pullToString = ((pullNumber, branch)) =>
   }
 
 module GetRepoPulls = %graphql(`
-query ($repoId: String!, $benchmarkName: String) {
-  pullNumbers: benchmarks(distinct_on: [pull_number], where: {_and: [{repo_id: {_eq: $repoId}}, {pull_number: {_is_null: false}}, {benchmark_name: {_eq: $benchmarkName}}]}, order_by: [{pull_number: desc}]) {
+query ($repoId: String!, $benchmarkName: String, $isDefaultBenchmark: Boolean!) {
+  pullNumbers: benchmarks(distinct_on: [pull_number], where: {_and: [{repo_id: {_eq: $repoId}}, {pull_number: {_is_null: false}}, {benchmark_name: {_is_null: $isDefaultBenchmark, _eq: $benchmarkName}}]}, order_by: [{pull_number: desc}]) {
     pull_number
     branch
   }
@@ -33,15 +33,21 @@ query ($repoId: String!) {
 `)
 
 module PullsMenu = {
+  let makesVariables = (~benchmarkName=?, ~repoId): GetRepoPulls.t_variables => {
+    let isDefaultBenchmark = Belt.Option.isNone(benchmarkName)
+    {
+      repoId: repoId,
+      benchmarkName: benchmarkName,
+      isDefaultBenchmark: isDefaultBenchmark,
+    }
+  }
+
   @react.component
   let make = (~repoId, ~benchmarkName=?, ~selectedPull=?) => {
     let ({ReasonUrql.Hooks.response: response}, _) = {
       ReasonUrql.Hooks.useQuery(
         ~query=module(GetRepoPulls),
-        {
-          repoId: repoId,
-          benchmarkName: benchmarkName,
-        },
+        makesVariables(~repoId, ~benchmarkName?),
       )
     }
 
@@ -64,11 +70,7 @@ module PullsMenu = {
             selectedPullNumber == pullNumber
           )}
           key={string_of_int(i)}
-          href={linkForPull(
-            repoId,
-            benchmarkName->Belt.Option.getWithDefault("default"),
-            pull,
-          )}
+          href={linkForPull(repoId, benchmarkName, pull)}
           text={pullToString(pull)}
         />
       })
@@ -88,6 +90,8 @@ module BenchmarksMenu = {
       )
     }
 
+    Js.log(selectedBenchmarkName)
+
     switch response {
     | Empty => <div> {"Something went wrong!"->Rx.text} </div>
     | Error({networkError: Some(_)}) => <div> {"Network Error"->Rx.text} </div>
@@ -95,24 +99,19 @@ module BenchmarksMenu = {
     | Fetching => Rx.text("Loading...")
     | Data(data)
     | PartialData(data, _) =>
-      let benchmarkNames =
-        data.benchmarkNames->Belt.Array.map(obj =>
-          obj.benchmark_name->Belt.Option.getWithDefault("default")
-        )
+      let benchmarkNames = data.benchmarkNames->Belt.Array.map(obj => obj.benchmark_name)
 
       benchmarkNames
       ->Belt.Array.mapWithIndex((i, benchmarkName) => {
         <Link
           sx=[Sx.pb.md]
-          active={selectedBenchmarkName->Belt.Option.mapWithDefault(false, selectedBenchmarkName =>
-            selectedBenchmarkName == benchmarkName
-          )}
+          active={selectedBenchmarkName == benchmarkName}
           key={string_of_int(i)}
           href={AppRouter.RepoBenchmark({
             repoId: repoId,
             benchmarkName: benchmarkName,
           })->AppRouter.path}
-          text={benchmarkName}
+          text={benchmarkName->Belt.Option.getWithDefault("default")}
         />
       })
       ->Rx.array
@@ -150,7 +149,6 @@ let make = (
         sx=[Sx.text.bold, Sx.text.xl, Sx.hover([Sx.text.color(Sx.gray900)])]
         text="Benchmarks"
       />
-
     </Row>
     <Column>
       <Text sx=[Sx.mb.md] color=Sx.gray700 weight=#bold uppercase=true size=#sm>
@@ -179,14 +177,9 @@ let make = (
       <Text color=Sx.gray700 weight=#bold uppercase=true size=#sm>
         {Rx.text("Pull Requests")}
       </Text>
-      {switch (selectedRepoId, selectedBenchmarkName) {
-      | (Some(repoId), Some(benchmarkName)) =>
-        <PullsMenu
-          repoId
-          benchmarkName=?{benchmarkName == "default" ? None : Some(benchmarkName)}
-          ?selectedPull
-        />
-      | _ => Rx.text("None")
+      {switch selectedRepoId {
+      | Some(repoId) => <PullsMenu repoId benchmarkName=?selectedBenchmarkName ?selectedPull />
+      | None => Rx.text("None")
       }}
     </Column>
   </Column>

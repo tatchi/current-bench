@@ -22,12 +22,12 @@ fragment BenchmarkMetrics on benchmarks {
 `)
 
 module GetBenchmarks = %graphql(`
-query ($repoId: String!, $pullNumber: Int, $isMaster: Boolean!, $benchmarkName: String, $startDate: timestamp!, $endDate: timestamp!, $comparisonLimit: Int!) {
-  benchmarks: benchmarks(where: {_and: [{pull_number: {_eq: $pullNumber}}, {pull_number: {_is_null: $isMaster}}, {repo_id: {_eq: $repoId}}, {benchmark_name: {_eq: $benchmarkName}}, {run_at: {_gte: $startDate}}, {run_at: {_lt: $endDate}}]}) {
+query ($repoId: String!, $pullNumber: Int, $isMaster: Boolean!, $benchmarkName: String, $isDefaultBenchmark: Boolean!, $startDate: timestamp!, $endDate: timestamp!, $comparisonLimit: Int!) {
+  benchmarks: benchmarks(where: {_and: [{pull_number: {_eq: $pullNumber}}, {pull_number: {_is_null: $isMaster}}, {repo_id: {_eq: $repoId}}, {benchmark_name: {_is_null: $isDefaultBenchmark, _eq: $benchmarkName}}, {run_at: {_gte: $startDate}}, {run_at: {_lt: $endDate}}]}) {
     ...BenchmarkMetrics
   }
 
-  comparisonBenchmarks: benchmarks(where: {_and: [{pull_number: {_is_null: true}}, {repo_id: {_eq: $repoId}}, {benchmark_name: {_eq: $benchmarkName}}, {run_at: {_gte: $startDate}}, {run_at: {_lt: $endDate}}]}, limit: $comparisonLimit, order_by: [{run_at: desc}]) {
+  comparisonBenchmarks: benchmarks(where: {_and: [{pull_number: {_is_null: true}}, {repo_id: {_eq: $repoId}}, {benchmark_name: {_is_null: $isDefaultBenchmark, _eq: $benchmarkName}}, {run_at: {_gte: $startDate}}, {run_at: {_lt: $endDate}}]}, limit: $comparisonLimit, order_by: [{run_at: desc}]) {
     ...BenchmarkMetrics
   }
 }
@@ -41,11 +41,13 @@ let makeGetBenchmarksVariables = (
   ~endDate,
 ): GetBenchmarks.t_variables => {
   let isMaster = Belt.Option.isNone(pullNumber)
+  let isDefaultBenchmark = Belt.Option.isNone(benchmarkName)
   let comparisonLimit = isMaster ? 0 : 50
   {
     repoId: repoId,
     pullNumber: pullNumber,
     isMaster: isMaster,
+    isDefaultBenchmark: isDefaultBenchmark,
     benchmarkName: benchmarkName,
     startDate: startDate,
     endDate: endDate,
@@ -291,8 +293,8 @@ let make = () => {
   | Error({reason}) => <ErrorView msg={reason} />
   | Ok(Main) => <RepoView />
   | Ok(Repo({repoId})) => <RepoView repoId />
-  | Ok(RepoBenchmark({repoId, benchmarkName})) => <RepoView repoId benchmarkName />
+  | Ok(RepoBenchmark({repoId, benchmarkName})) => <RepoView repoId ?benchmarkName />
   | Ok(RepoPull({repoId, pullNumber, benchmarkName})) =>
-    <RepoView repoId pullNumber benchmarkName />
+    <RepoView repoId pullNumber ?benchmarkName />
   }
 }
