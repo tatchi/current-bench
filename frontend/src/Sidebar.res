@@ -1,8 +1,12 @@
 open! Prelude
 open Components
 
-let linkForPull = (repoId, (pullNumber, _)) => {
-  AppRouter.RepoPull({repoId: repoId, pullNumber: pullNumber})->AppRouter.path
+let linkForPull = (repoId, benchmarkName, (pullNumber, _)) => {
+  AppRouter.RepoPull({
+    repoId: repoId,
+    benchmarkName: benchmarkName,
+    pullNumber: pullNumber,
+  })->AppRouter.path
 }
 
 let pullToString = ((pullNumber, branch)) =>
@@ -12,20 +16,72 @@ let pullToString = ((pullNumber, branch)) =>
   }
 
 module GetRepoPulls = %graphql(`
-query ($repoId: String!) {
-  pullNumbers: benchmarks(distinct_on: [pull_number], where: {_and: [{repo_id: {_eq: $repoId}}, {pull_number: {_is_null: false}}]}, order_by: [{pull_number: desc}]) {
+query ($repoId: String!, $benchmarkName: String) {
+  pullNumbers: benchmarks(distinct_on: [pull_number], where: {_and: [{repo_id: {_eq: $repoId}}, {pull_number: {_is_null: false}}, {benchmark_name: {_eq: $benchmarkName}}]}, order_by: [{pull_number: desc}]) {
     pull_number
     branch
-  }  
+  }
+}
+`)
+
+module GetRepoBenchmarkNames = %graphql(`
+query ($repoId: String!) {
+  benchmarkNames: benchmarks(distinct_on: [benchmark_name], where: {repo_id: {_eq: $repoId}}, order_by: [{benchmark_name: asc_nulls_first}]) {
+    benchmark_name
+  }
 }
 `)
 
 module PullsMenu = {
   @react.component
-  let make = (~repoId, ~selectedPull=?) => {
+  let make = (~repoId, ~benchmarkName=?, ~selectedPull=?) => {
     let ({ReasonUrql.Hooks.response: response}, _) = {
       ReasonUrql.Hooks.useQuery(
         ~query=module(GetRepoPulls),
+        {
+          repoId: repoId,
+          benchmarkName: benchmarkName,
+        },
+      )
+    }
+
+    switch response {
+    | Empty => <div> {"Something went wrong!"->Rx.text} </div>
+    | Error({networkError: Some(_)}) => <div> {"Network Error"->Rx.text} </div>
+    | Error({networkError: None}) => <div> {"Unknown Error"->Rx.text} </div>
+    | Fetching => Rx.text("Loading...")
+    | Data(data)
+    | PartialData(data, _) =>
+      let pulls =
+        data.pullNumbers->Belt.Array.map(obj => (obj.pull_number->Belt.Option.getExn, obj.branch))
+
+      pulls
+      ->Belt.Array.mapWithIndex((i, pull) => {
+        let (pullNumber, _) = pull
+        <Link
+          sx=[Sx.pb.md]
+          active={selectedPull->Belt.Option.mapWithDefault(false, selectedPullNumber =>
+            selectedPullNumber == pullNumber
+          )}
+          key={string_of_int(i)}
+          href={linkForPull(
+            repoId,
+            benchmarkName->Belt.Option.getWithDefault("default"),
+            pull,
+          )}
+          text={pullToString(pull)}
+        />
+      })
+      ->Rx.array
+    }
+  }
+}
+module BenchmarksMenu = {
+  @react.component
+  let make = (~repoId, ~selectedBenchmarkName=?) => {
+    let ({ReasonUrql.Hooks.response: response}, _) = {
+      ReasonUrql.Hooks.useQuery(
+        ~query=module(GetRepoBenchmarkNames),
         {
           repoId: repoId,
         },
@@ -39,20 +95,24 @@ module PullsMenu = {
     | Fetching => Rx.text("Loading...")
     | Data(data)
     | PartialData(data, _) =>
-      let pulls =
-        data.pullNumbers->Belt.Array.map(obj => (obj.pull_number |> Belt.Option.getExn, obj.branch))
+      let benchmarkNames =
+        data.benchmarkNames->Belt.Array.map(obj =>
+          obj.benchmark_name->Belt.Option.getWithDefault("default")
+        )
 
-      pulls
-      ->Belt.Array.mapWithIndex((i, pull) => {
-        let (pullNumber, _) = pull
+      benchmarkNames
+      ->Belt.Array.mapWithIndex((i, benchmarkName) => {
         <Link
           sx=[Sx.pb.md]
-          active={selectedPull->Belt.Option.mapWithDefault(false, selectedPullNumber =>
-            selectedPullNumber == pullNumber
+          active={selectedBenchmarkName->Belt.Option.mapWithDefault(false, selectedBenchmarkName =>
+            selectedBenchmarkName == benchmarkName
           )}
           key={string_of_int(i)}
-          href={linkForPull(repoId, pull)}
-          text={pullToString(pull)}
+          href={AppRouter.RepoBenchmark({
+            repoId: repoId,
+            benchmarkName: benchmarkName,
+          })->AppRouter.path}
+          text={benchmarkName}
         />
       })
       ->Rx.array
@@ -61,7 +121,13 @@ module PullsMenu = {
 }
 
 @react.component
-let make = (~repoIds, ~selectedRepoId=?, ~onSelectRepoId, ~selectedPull=?) => {
+let make = (
+  ~repoIds,
+  ~selectedRepoId=?,
+  ~onSelectRepoId,
+  ~selectedPull=?,
+  ~selectedBenchmarkName=?,
+) => {
   <Column
     spacing=Sx.xl
     sx=[
@@ -84,6 +150,7 @@ let make = (~repoIds, ~selectedRepoId=?, ~onSelectRepoId, ~selectedPull=?) => {
         sx=[Sx.text.bold, Sx.text.xl, Sx.hover([Sx.text.color(Sx.gray900)])]
         text="Benchmarks"
       />
+
     </Row>
     <Column>
       <Text sx=[Sx.mb.md] color=Sx.gray700 weight=#bold uppercase=true size=#sm>
@@ -102,12 +169,24 @@ let make = (~repoIds, ~selectedRepoId=?, ~onSelectRepoId, ~selectedPull=?) => {
       </Select>
     </Column>
     <Column>
+      <Text color=Sx.gray700 weight=#bold uppercase=true size=#sm> {Rx.text("Benchmarks")} </Text>
+      {switch selectedRepoId {
+      | Some(repoId) => <BenchmarksMenu repoId ?selectedBenchmarkName />
+      | None => Rx.text("None")
+      }}
+    </Column>
+    <Column>
       <Text color=Sx.gray700 weight=#bold uppercase=true size=#sm>
         {Rx.text("Pull Requests")}
       </Text>
-      {switch selectedRepoId {
-      | Some(repoId) => <PullsMenu repoId ?selectedPull />
-      | None => Rx.text("None")
+      {switch (selectedRepoId, selectedBenchmarkName) {
+      | (Some(repoId), Some(benchmarkName)) =>
+        <PullsMenu
+          repoId
+          benchmarkName=?{benchmarkName == "default" ? None : Some(benchmarkName)}
+          ?selectedPull
+        />
+      | _ => Rx.text("None")
       }}
     </Column>
   </Column>
